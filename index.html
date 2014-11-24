@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Time Series Analysis Tutorial</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Time Series Analysis Tutorial</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#data-cleaning">Data Cleaning</a><ul>
+<li><a href="#importing-the-data">Importing the Data</a></li>
+<li><a href="#checking-for-missing-values">Checking for Missing Values</a></li>
+<li><a href="#reshaping-the-data-frame">Reshaping the Data Frame</a></li>
+<li><a href="#augmenting-the-data-frame">Augmenting the Data Frame</a></li>
+<li><a href="#sorting-the-data">Sorting the Data</a></li>
+<li><a href="#indexing-the-data">Indexing the Data</a></li>
+</ul></li>
+<li><a href="#data-exploration">Data Exploration</a><ul>
+<li><a href="#plotting-the-time-series">Plotting the Time Series</a></li>
+<li><a href="#boxplots-by-month">Boxplots by Month</a></li>
+<li><a href="#summary-statistics">Summary Statistics</a></li>
+</ul></li>
+<li><a href="#making-the-series-stationary">Making The Series Stationary</a><ul>
+<li><a href="#transformations">Transformations</a></li>
+<li><a href="#standardizing">Standardizing</a></li>
+<li><a href="#local-first-order-differencing">Local First Order Differencing</a></li>
+<li><a href="#seasonal-differencing">Seasonal Differencing</a></li>
+</ul></li>
+<li><a href="#arima-modeling">ARIMA Modeling</a><ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#defining-a-search-space">Defining a Search Space</a></li>
+<li><a href="#selection-criteria">Selection Criteria</a></li>
+<li><a href="#fitting-arima-models">Fitting ARIMA Models</a></li>
+<li><a href="#model-screening">Model Screening</a><ul>
+<li><a href="#top-5-models-based-on-aicc">Top 5 Models Based On AICc</a></li>
+<li><a href="#top-5-models-based-on-bic">Top 5 models Based on BIC</a></li>
+</ul></li>
+<li><a href="#pareto-selection">Pareto Selection</a></li>
+<li><a href="#cross-evaluation">Cross-Evaluation</a></li>
+<li><a href="#final-selection">Final Selection</a></li>
+</ul></li>
+<li><a href="#reproducibility-information">Reproducibility Information</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<strong>Kevin M. Smith // Big Data Analytics // Fall 2014</strong>
+<hr>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>This tutorial explores basic data manipulation and time series analysis techniques. The data set is a complete record of the mean monthly flows of the Ganges from January 1934 to December 2013. The source code and data for this tutorial is available <a href="http://www.github.com/Kevin-M-Smith/BDA2014/TimeSeriesAnalysis">here</a>. The most recent web version of this document is available <a href="http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis">here</a>.</p>
+<hr>
+</div>
+<div id="data-cleaning" class="section level1">
+<h1>Data Cleaning</h1>
+<div id="importing-the-data" class="section level2">
+<h2>Importing the Data</h2>
+<p>First let’s load our data into a <strong>data frame</strong> object using the <strong>read.csv()</strong> command. Then we’ll followup with a <strong>head()</strong> command to look at the first few rows of the data set.</p>
+<pre class="r"><code>ganges &lt;- read.csv(&quot;data/Ganges.csv&quot;)
+head(ganges)</code></pre>
+<pre><code>##   Year  Jan  Feb  Mar  Apr  May  Jun   Jul   Aug   Sep   Oct  Nov  Dec
+## 1 1934 2778 2458 2228 2138 1987 3613 19775 36277 40084 18625 6197 3432
+## 2 1935 2389 2056 1625 1888 1654 2918 13086 38239 27645 13908 4531 3356
+## 3 1936 2858 2312 2442 1434 1778 5189 22873 39497 38061 16688 6665 3830
+## 4 1937 2630 2495 2392 1803 1877 3440 11893 33913 30065 18748 6379 3495
+## 5 1938 2550 2176 2013 2216 2053 8557 28319 43681 33735 10132 4880 3254
+## 6 1939 2291 2164 2096 1750 1790 3090 13052 28606 26545 12759 5277 3132</code></pre>
+<p>The data are organized into 13 columns. The first contains the year of the observations in a given row, while the other 12 contain the mean monthly flow in cubic feet per second (CFS).</p>
+</div>
+<div id="checking-for-missing-values" class="section level2">
+<h2>Checking for Missing Values</h2>
+<p>Let’s verify that the data set is complete. With a data set this small it is easy to look for missing data visually, but with larger data sets this is difficult. For a simple check we can use <strong>sapply()</strong> and <strong>is.na()</strong>. Here we count each occurrence of missing data using <strong>sum()</strong>. The result is a column-wise count of the missing values. If the data set is complete we should see all zeros.</p>
+<pre class="r"><code>sapply(ganges, function(x) sum(is.na(x)))</code></pre>
+<pre><code>## Year  Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec 
+##    0    0    0    0    0    0    0    0    0    0    0    0    0</code></pre>
+</div>
+<div id="reshaping-the-data-frame" class="section level2">
+<h2>Reshaping the Data Frame</h2>
+<p>The shape of the data frame is not currently very conducive to plotting as a time series. It would be easier to plot discharge as a function of time if there were instead one observation of discharge per row. An easy way to make this happen is to “melt” the data frame using the <strong>reshape2</strong> package. The <strong>melt()</strong> takes arguments that specify how the data frame should be “melted.” The <strong>id.vars</strong> argument specifies the names of the columns that should be preserved as columnar variables. Here we want to preserve the <strong>Year</strong> column. The rest of the columns melt into attributes within the rows. We will assign the column headings to a new column <strong>Month.Abb</strong> and their associated values to the column <strong>Flow</strong>, using the <strong>variable.name</strong> and <strong>value.name</strong> arguments respectively.</p>
+<pre class="r"><code>require(reshape2)
+ganges &lt;- melt(ganges, id.vars=&quot;Year&quot;, variable.name=&quot;Month.Abb&quot;, value.name=&quot;Flow&quot;)
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow
+## 1 1934       Jan 2778
+## 2 1935       Jan 2389
+## 3 1936       Jan 2858
+## 4 1937       Jan 2630
+## 5 1938       Jan 2550
+## 6 1939       Jan 2291</code></pre>
+</div>
+<div id="augmenting-the-data-frame" class="section level2">
+<h2>Augmenting the Data Frame</h2>
+<p>Now that we have the data in the format we’d like, let’s add a few extra attributes that will be helpful. We’ll be using the <strong>plyr</strong> package and the <strong>transform()</strong> function for this purpose. As a first step, let’s add a column <strong><em>MID</em></strong> as an integer representation of the <strong>Month.Abb</strong> attribute. The <strong>base</strong> package in <strong>R</strong> pre-loads three-letter abbreviations for months into the vector <strong>month.abb</strong>. It can be accessed anytime by simply calling it:</p>
+<pre class="r"><code>month.abb </code></pre>
+<pre><code>##  [1] &quot;Jan&quot; &quot;Feb&quot; &quot;Mar&quot; &quot;Apr&quot; &quot;May&quot; &quot;Jun&quot; &quot;Jul&quot; &quot;Aug&quot; &quot;Sep&quot; &quot;Oct&quot; &quot;Nov&quot;
+## [12] &quot;Dec&quot;</code></pre>
+<p>The ordering here is intuitive. January = 1, February = 2, etc. We can use this to create a function that match the <strong><em>Month.Abb</em></strong> attribute in our data set with index of the abbreviation in <strong>month.abb</strong>.</p>
+<pre class="r"><code>getMID &lt;- function(x){ match(x, month.abb) }</code></pre>
+<p>Let’s give it a try.</p>
+<pre class="r"><code>getMID(&quot;May&quot;)</code></pre>
+<pre><code>## [1] 5</code></pre>
+<p>Now let’s pass the <strong>getMID()</strong> to the <strong>transform()</strong> function from the <strong>plyr</strong> package to augment our data set.</p>
+<pre class="r"><code>require(plyr)
+ganges &lt;- transform(ganges, MID = getMID(Month.Abb))
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID
+## 1 1934       Jan 2778   1
+## 2 1935       Jan 2389   1
+## 3 1936       Jan 2858   1
+## 4 1937       Jan 2630   1
+## 5 1938       Jan 2550   1
+## 6 1939       Jan 2291   1</code></pre>
+</div>
+<div id="sorting-the-data" class="section level2">
+<h2>Sorting the Data</h2>
+<p>Our data is not currently sorted by time. However, now that we have numeric representations of both the years and months of our observations, we can use <strong>arrange()</strong> from the <strong>plyr</strong> package to quickly sort our data. Let’s <strong>arrange()</strong> the data in ascending order of <strong>Year</strong> and then <strong>MID</strong>.</p>
+<pre class="r"><code>ganges &lt;- arrange(ganges, Year, MID)
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID
+## 1 1934       Jan 2778   1
+## 2 1934       Feb 2458   2
+## 3 1934       Mar 2228   3
+## 4 1934       Apr 2138   4
+## 5 1934       May 1987   5
+## 6 1934       Jun 3613   6</code></pre>
+<p><strong>N.B.</strong>: We have been using <strong>head()</strong> to check the first 6 rows of our data, but we can also use <strong>tail()</strong> to see the last six rows.</p>
+<pre class="r"><code>tail(ganges)</code></pre>
+<pre><code>##     Year Month.Abb  Flow MID
+## 943 2012       Jul 11955   7
+## 944 2012       Aug 24402   8
+## 945 2012       Sep 28627   9
+## 946 2012       Oct 12034  10
+## 947 2012       Nov  4122  11
+## 948 2012       Dec  2186  12</code></pre>
+</div>
+<div id="indexing-the-data" class="section level2">
+<h2>Indexing the Data</h2>
+<p>As a final step, it is useful to have an index of the data. Here we will just use the order of the rows, since the data is sorted. This time we will just use the <strong>$</strong> accessor method to access the desired column from the data frame. When <strong>$</strong> is used with a name that is not currently in the data frame a new column is created. We will use the colon operator to generate a regular sequence (e.g. 1, 2, 3…) from 1 to the number of rows. We can use <strong>nrow()</strong> to calculate the number of rows.</p>
+<pre class="r"><code>ganges$Index &lt;- 1:nrow(ganges)
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID Index
+## 1 1934       Jan 2778   1     1
+## 2 1934       Feb 2458   2     2
+## 3 1934       Mar 2228   3     3
+## 4 1934       Apr 2138   4     4
+## 5 1934       May 1987   5     5
+## 6 1934       Jun 3613   6     6</code></pre>
+</div>
+</div>
+<div id="data-exploration" class="section level1">
+<h1>Data Exploration</h1>
+<div id="plotting-the-time-series" class="section level2">
+<h2>Plotting the Time Series</h2>
+<p>We’re finally ready to plot the data. The <strong>ggplot2</strong> package provides decent graphics capabilities out of the box. Let’s fire them up and plot the monthly flow series.</p>
+<pre class="r"><code>require(ggplot2)
+
+timerange &lt;- paste(&quot;(&quot;, min(ganges$Year), &quot;-&quot;, max(ganges$Year), &quot;)&quot;)
+p1 &lt;- ggplot(ganges, aes(y=Flow, x=Index)) + geom_line()
+p1 &lt;- p1 + ggtitle(paste(&quot;Time Series of Ganges Monthly Mean Flow&quot;, timerange))
+p1 &lt;- p1 + ylab(&quot;Flow (CFS)&quot;) + theme_bw()
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-12-1.png" /></p>
+</div>
+<div id="boxplots-by-month" class="section level2">
+<h2>Boxplots by Month</h2>
+<p>The data seems to be exhibiting serious seasonality, but it is difficult to tell what is really going on at this scale. Let’s bin the data by month and plot a box-plot.</p>
+<pre class="r"><code>p1 &lt;- ggplot(ganges, aes(y=Flow, x=Month.Abb)) + geom_boxplot() + theme_bw() + xlab(&quot;&quot;)
+p1 &lt;- p1 + ggtitle(paste(&quot;Boxplot of Ganges Monthly Mean Flows by Month&quot;, timerange))
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-13-1.png" /></p>
+<p>The box-plots make the structure of the within-year variability is clearer. The strength of the correlation at a monthly lag of 12 is highlighted in the plot below. We will have to remove this structure to make the series stationary.</p>
+<pre class="r"><code>for(i in 1:12){
+  ganges.lag12 = rep(NA, nrow(ganges))
+  ganges.lag12[1:12==(i)] = ganges$Flow[1:12==(i)]
+  
+  p1 &lt;- ggplot(ganges, aes(y=Flow, x=Index)) + theme_bw()
+  p1 &lt;- p1 + geom_line() + geom_point(aes(y=ganges.lag12)) + ylab(&quot;Log Flow&quot;)
+  p1 &lt;- p1 + ggtitle(paste(&quot;Highlighting the Lag 12 Correlation in Ganges Mean Monthly Flows&quot;, 
+                           timerange))
+  print(p1)
+}</code></pre>
+<div class="scianimator">
+<div id="unnamed_chunk_14" style="display: inline-block;">
+
+</div>
+</div>
+<script type="text/javascript">
+  (function($) {
+    $(document).ready(function() {
+      var imgs = Array(12);
+      for (i=0; ; i++) {
+        if (i == imgs.length) break;
+        imgs[i] = "index_files/figure-html/unnamed-chunk-14-" + (i + 1) + ".png";
+      }
+      $("#unnamed_chunk_14").scianimator({
+          "images": imgs,
+          "delay": 100,
+          "controls": "none",
+      });
+      $("#unnamed_chunk_14").scianimator("play");
+    });
+  })(jQuery);
+</script>
+</div>
+<div id="summary-statistics" class="section level2">
+<h2>Summary Statistics</h2>
+<p>It can be helpful to have a table of summary statistics to refer to. The <strong>ddply()</strong> function in the <strong>plyr</strong> package is very powerful. It includes a sub-command <strong>summarize</strong> that will return a data frame summarizing the data to your specifications. Here we’d like a summary table of the Mean, Standard Deviation, and Coefficient of Variation by Month.</p>
+<pre class="r"><code>sum.stats &lt;- ddply(ganges, &quot;Month.Abb&quot;, summarize, 
+           Mean = mean(Flow),
+           SD = sd(Flow), 
+           CV = Mean/SD)
+sum.stats</code></pre>
+<pre><code>##    Month.Abb      Mean        SD       CV
+## 1        Jan  2537.051 1123.8789 2.257406
+## 2        Feb  2013.582  843.4563 2.387299
+## 3        Mar  1663.063  765.5877 2.172270
+## 4        Apr  1519.101  648.6989 2.341766
+## 5        May  1758.266  574.2320 3.061943
+## 6        Jun  3987.658 1617.7573 2.464930
+## 7        Jul 18763.671 5860.1183 3.201927
+## 8        Aug 37200.608 8042.0985 4.625734
+## 9        Sep 35987.203 8398.9176 4.284743
+## 10       Oct 17374.139 6488.6895 2.677604
+## 11       Nov  6505.380 2290.9823 2.839559
+## 12       Dec  3761.633 1657.3911 2.269611</code></pre>
+<p>The <strong>pander</strong> package includes some nice table formatting features. Let’s apply it to our table by calling the <strong>pander()</strong> function.</p>
+<pre class="r"><code>require(pander)
+panderOptions(&#39;digits&#39;, 3)
+panderOptions(&#39;keep.trailing.zeros&#39;, TRUE)
+pander(sum.stats)</code></pre>
+<table>
+<colgroup>
+<col width="16%" />
+<col width="9%" />
+<col width="6%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Month.Abb</th>
+<th align="center">Mean</th>
+<th align="center">SD</th>
+<th align="center">CV</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">Jan</td>
+<td align="center">2537</td>
+<td align="center">1124</td>
+<td align="center">2.26</td>
+</tr>
+<tr class="even">
+<td align="center">Feb</td>
+<td align="center">2014</td>
+<td align="center">843</td>
+<td align="center">2.39</td>
+</tr>
+<tr class="odd">
+<td align="center">Mar</td>
+<td align="center">1663</td>
+<td align="center">766</td>
+<td align="center">2.17</td>
+</tr>
+<tr class="even">
+<td align="center">Apr</td>
+<td align="center">1519</td>
+<td align="center">649</td>
+<td align="center">2.34</td>
+</tr>
+<tr class="odd">
+<td align="center">May</td>
+<td align="center">1758</td>
+<td align="center">574</td>
+<td align="center">3.06</td>
+</tr>
+<tr class="even">
+<td align="center">Jun</td>
+<td align="center">3988</td>
+<td align="center">1618</td>
+<td align="center">2.46</td>
+</tr>
+<tr class="odd">
+<td align="center">Jul</td>
+<td align="center">18764</td>
+<td align="center">5860</td>
+<td align="center">3.20</td>
+</tr>
+<tr class="even">
+<td align="center">Aug</td>
+<td align="center">37201</td>
+<td align="center">8042</td>
+<td align="center">4.63</td>
+</tr>
+<tr class="odd">
+<td align="center">Sep</td>
+<td align="center">35987</td>
+<td align="center">8399</td>
+<td align="center">4.28</td>
+</tr>
+<tr class="even">
+<td align="center">Oct</td>
+<td align="center">17374</td>
+<td align="center">6489</td>
+<td align="center">2.68</td>
+</tr>
+<tr class="odd">
+<td align="center">Nov</td>
+<td align="center">6505</td>
+<td align="center">2291</td>
+<td align="center">2.84</td>
+</tr>
+<tr class="even">
+<td align="center">Dec</td>
+<td align="center">3762</td>
+<td align="center">1657</td>
+<td align="center">2.27</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="making-the-series-stationary" class="section level1">
+<h1>Making The Series Stationary</h1>
+<div id="transformations" class="section level2">
+<h2>Transformations</h2>
+<p>We have already seen that the plot of monthly flows is highly seasonal with neither a constant mean or variance. <strong>Applying a transform to the data can help stabalize the variance.</strong> Let’s see how a log transform looks.</p>
+<pre class="r"><code>timerange &lt;- paste(&quot;(&quot;, min(ganges$Year), &quot;-&quot;, max(ganges$Year), &quot;)&quot;)
+p1 &lt;- ggplot(ganges, aes(y=log(Flow), x=Index)) + geom_line()
+p1 &lt;- p1 + ggtitle(paste(&quot;Time Series of Ganges Monthly Log-Transformed Mean Flow&quot;, timerange))
+p1 &lt;- p1 + ylab(&quot;Log Flow&quot;) + theme_bw()
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-17-1.png" /></p>
+</div>
+<div id="standardizing" class="section level2">
+<h2>Standardizing</h2>
+<p>We can further stabilize the mean and variance by standardizing the series. Again, we’ll turn to the <strong>plyr</strong> package. First let’s add a column for our log-transformed data using the <strong>transform()</strong> function.</p>
+<pre class="r"><code>ganges &lt;- transform(ganges, Log.Flow = log(Flow))
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID Index Log.Flow
+## 1 1934       Jan 2778   1     1 7.929487
+## 2 1934       Feb 2458   2     2 7.807103
+## 3 1934       Mar 2228   3     3 7.708860
+## 4 1934       Apr 2138   4     4 7.667626
+## 5 1934       May 1987   5     5 7.594381
+## 6 1934       Jun 3613   6     6 8.192294</code></pre>
+<p>Now we’ll use <strong>ddply()</strong> and <strong>summarize()</strong> to create summary statistics about the means of the log-transformed flows.</p>
+<pre class="r"><code>log.flow.monthly.stats &lt;- ddply(ganges, &quot;Month.Abb&quot;, summarize, Log.Flow.M.Mean = mean(Log.Flow), Log.Flow.M.SD = sd(Log.Flow))
+head(log.flow.monthly.stats)</code></pre>
+<pre><code>##   Month.Abb Log.Flow.M.Mean Log.Flow.M.SD
+## 1       Jan        7.758477     0.3953657
+## 2       Feb        7.516288     0.4442656
+## 3       Mar        7.292052     0.5324115
+## 4       Apr        7.214886     0.5055721
+## 5       May        7.413945     0.3569764
+## 6       Jun        8.208680     0.4194766</code></pre>
+<p>Next, we join the summary statistics back to the original data set using <strong>plyr</strong>’s <strong>join()</strong> function.</p>
+<pre class="r"><code>ganges &lt;- join(ganges, log.flow.monthly.stats, by=&quot;Month.Abb&quot;)
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID Index Log.Flow Log.Flow.M.Mean Log.Flow.M.SD
+## 1 1934       Jan 2778   1     1 7.929487        7.758477     0.3953657
+## 2 1934       Feb 2458   2     2 7.807103        7.516288     0.4442656
+## 3 1934       Mar 2228   3     3 7.708860        7.292052     0.5324115
+## 4 1934       Apr 2138   4     4 7.667626        7.214886     0.5055721
+## 5 1934       May 1987   5     5 7.594381        7.413945     0.3569764
+## 6 1934       Jun 3613   6     6 8.192294        8.208680     0.4194766</code></pre>
+<p>Now, we’ll <strong>mutate()</strong> the data frame one last time to get the standardized series. (Mutate is similar to transform, except that the newly declared columns can be reused right away to declare other new columns.) Let’s call it <strong>Log.Flow.Standardized</strong>.</p>
+<pre class="r"><code>ganges &lt;- mutate(ganges, 
+                 Log.Flow.M.Mean.Removed = Log.Flow - Log.Flow.M.Mean, 
+                 Log.Flow.Standardized = Log.Flow.M.Mean.Removed / Log.Flow.M.SD)
+head(ganges)</code></pre>
+<pre><code>##   Year Month.Abb Flow MID Index Log.Flow Log.Flow.M.Mean Log.Flow.M.SD
+## 1 1934       Jan 2778   1     1 7.929487        7.758477     0.3953657
+## 2 1934       Feb 2458   2     2 7.807103        7.516288     0.4442656
+## 3 1934       Mar 2228   3     3 7.708860        7.292052     0.5324115
+## 4 1934       Apr 2138   4     4 7.667626        7.214886     0.5055721
+## 5 1934       May 1987   5     5 7.594381        7.413945     0.3569764
+## 6 1934       Jun 3613   6     6 8.192294        8.208680     0.4194766
+##   Log.Flow.M.Mean.Removed Log.Flow.Standardized
+## 1              0.17100998            0.43253625
+## 2              0.29081527            0.65459781
+## 3              0.41680773            0.78286758
+## 4              0.45274049            0.89550128
+## 5              0.18043650            0.50545773
+## 6             -0.01638627           -0.03906361</code></pre>
+<p>Now when we plot box-plots by month, we see a consistent distribution of standardized flows.</p>
+<pre class="r"><code>p1 &lt;- ggplot(ganges, aes(y=Log.Flow.Standardized, x=Month.Abb)) + geom_boxplot() + theme_bw()
+p1 &lt;- p1 + ggtitle(paste(&quot;Boxplot of Standardized Ganges Log-Mean Flows by Month&quot;, timerange))
+p1 &lt;- p1 + ylab(&quot;Standardized Log-Transformed Flow&quot;) + xlab(&quot;&quot;)
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-22-1.png" /></p>
+<p>Finally we’d like to look at the full and partial correlograms, which plot the <strong>autocorrelation</strong> and <strong>partial autocorrelation</strong> as functions of the time lag, k. The built-in <strong>R</strong> functions <strong>acf()</strong> and <strong>pacf</strong> would do the trick. However, here we will create our own functions using graphics objects from the <strong>ggplot2</strong> package.</p>
+<pre class="r"><code>correlogram &lt;- function(x, type = &quot;correlation&quot;){
+  gacf = acf(x, plot=FALSE, lag.max=120, type = type)
+  gacf.df = with(gacf, data.frame(lag, acf))
+  gacf.df$sig = qnorm((1 + 0.95)/2)/sqrt(length(x))
+  q &lt;- ggplot(data = gacf.df, mapping = aes(x = lag, y = acf))
+  q &lt;- q + xlim(c(0,120)) + theme_bw()
+  q &lt;- q + geom_hline(aes(yintercept = 0))
+  q &lt;- q + geom_segment(mapping = aes(xend = lag), yend = 0, lwd = 1)
+  q &lt;- q + geom_hline(aes(yintercept = c(sig, -1*sig)), linetype = 2, colour = &quot;#e51843&quot;)
+  if(type == &quot;partial&quot;){
+    q &lt;- q + ylab(expression(alpha[k]))
+  } else {
+    q &lt;- q + ylab(expression(rho[k]))
+  }
+  q &lt;- q + xlab(&quot;lag k&quot;)
+}</code></pre>
+<p>Now let’s plot the correlograms. We’ll be using the <strong>gridExtra</strong> packages to help arrange the graphics on the page.</p>
+<pre class="r"><code>require(gridExtra)
+q1 &lt;- correlogram(ganges$Log.Flow.Standardized) + xlab(&quot; &quot;) + ggtitle(&quot;Total and Partial Correlograms&quot;)
+q2 &lt;- correlogram(ganges$Log.Flow.Standardized, type = &quot;partial&quot;) 
+grid.arrange(q1, q2, nrow = 2)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-24-1.png" /></p>
+<p>The seasonal correlation is clearly still alive and well. Next we’ll take a look at difference to try and account for this correlation.</p>
+</div>
+<div id="local-first-order-differencing" class="section level2">
+<h2>Local First Order Differencing</h2>
+<p>Local (lag = 1) first order differencing can be employed to help reduce seasonal auto-correlation in the <strong>total correlogram</strong>. However it also introduces negative correlation in the <strong>partial correlogram</strong>. This is the result in the plot below. It may be possible to model the behavior of the <strong>partial correlogram</strong> with the moving-average (MA) term(s) in our forthcoming ARIMA model, however with 12 consecutive significant lags in the <strong>partial correlogram</strong>, local first order differencing seems to do more harm than good.</p>
+<pre class="r"><code>ganges.diff &lt;- diff(ganges$Log.Flow.Standardized, 1) 
+q1 &lt;- correlogram(ganges.diff) + xlab(&quot; &quot;)
+q1 &lt;- q1 + ggtitle(&quot;Total and Partial Correlograms with First Order Differencing at Lag 1&quot;)
+q2 &lt;- correlogram(ganges.diff, type = &quot;partial&quot;) 
+grid.arrange(q1, q2, nrow = 2)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-25-1.png" /></p>
+</div>
+<div id="seasonal-differencing" class="section level2">
+<h2>Seasonal Differencing</h2>
+<p>As an alternative to first order differencing at lag 1, we can apply a “seasonal” first order differencing at lag 12. This can be done by changing the argument passed to the <strong>diff()</strong> function.</p>
+<pre class="r"><code>ganges.diff12 &lt;- diff(ganges$Log.Flow.Standardized, 12) 
+q1 &lt;- correlogram(ganges.diff12) + xlab(&quot; &quot;)
+q1 &lt;- q1 + ggtitle(&quot;Total and Partial Correlograms with First Order Differencing at Lag 12&quot;)
+q2 &lt;- correlogram(ganges.diff12, type = &quot;partial&quot;) 
+grid.arrange(q1, q2, nrow = 2)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-26-1.png" /></p>
+<p>Once again this differencing reduced seasonality in the <strong>total correlogram</strong> but introduced additional correlation in to the <strong>partial correlogram</strong>. For now we will neither accept nor reject the need for seasonal or local differencing. We test values for both <strong>d</strong> (local) and <strong>D</strong> (seasonal) differencing in the next section on ARIMA model selection.</p>
+</div>
+</div>
+<div id="arima-modeling" class="section level1">
+<h1>ARIMA Modeling</h1>
+<div id="parameters" class="section level2">
+<h2>Parameters</h2>
+<p>Here we will be considering auto-regressive integrated moving average models of the form <span class="math">\(ARIMA(p,d,q) \cdot ARIMA(P,D,Q)_{12}\)</span> where the parameters are defined as follows:</p>
+<ul>
+<li>p - number of autoregressive terms</li>
+<li>d - order of lag 1 differencing</li>
+<li>q - number of moving-average terms</li>
+<li>P - number of seasonal auto-regressive terms</li>
+<li>D - order of lag 12 differencing</li>
+<li>Q - number of seasonal moving-average terms</li>
+</ul>
+</div>
+<div id="defining-a-search-space" class="section level2">
+<h2>Defining a Search Space</h2>
+<p>Looking at the differenced correlograms did not lead to a conclusive set of parameter candidates. As a consequence we will consider a suite of ARIMA models up to order 3 for <em>p</em>, <em>d</em>, and <em>q</em>. Furthermore we will consider seasonal differencing <em>D</em> up to order 1 and <em>P</em> and <em>Q</em> up to order 2. There is some subjectivity in choosing this search space and it is by no means exhaustive. However, for the purposes of this exercise the space is quite comprehensive. In total we will consider <span class="math">\((4)(4)(4)(3)(2)(3) = 1152\)</span> different ARIMA models.</p>
+<p>We will define the space using regular sequences for each of the variables and subsequently expanding them using the built-in <strong>expand.grid()</strong> function.</p>
+<pre class="r"><code>p = 0:3; d = 0:3; q = 0:3
+P = 0:2; D = 0:1; Q = 0:2
+Arima.Models &lt;- expand.grid(p=p, d=d, q=q, P=P, D=D, Q=Q)
+tail(Arima.Models)</code></pre>
+<pre><code>##      p d q P D Q
+## 1147 2 2 3 2 1 2
+## 1148 3 2 3 2 1 2
+## 1149 0 3 3 2 1 2
+## 1150 1 3 3 2 1 2
+## 1151 2 3 3 2 1 2
+## 1152 3 3 3 2 1 2</code></pre>
+</div>
+<div id="selection-criteria" class="section level2">
+<h2>Selection Criteria</h2>
+<p>We will be fitting ARIMA models using the <strong>Arima()</strong> function in the <strong>forecast</strong> package. It returns three criteria for selection, which are listed as follows:</p>
+<ul>
+<li>AIC - <a href="http://en.wikipedia.org/wiki/Akaike_information_criterion">Akaike Information Criterion</a></li>
+<li>AICc - <a href="http://en.wikipedia.org/wiki/Akaike_information_criterion#AICc">Akaike Information Criterion (Correction for Finite Sample Sizes)</a></li>
+<li>BIC - <a href="http://en.wikipedia.org/wiki/Bayesian_information_criterion">Bayesian Information Criterion</a></li>
+</ul>
+<p>While AIC is the traditional metric for ARIMA selection, AICc and BIC are quickly superseding it. AICc and BIC penalize model complexity more than the AIC. For all measures, a smaller score makes the model favorable for selection. For now, we will write a method that returns all three after fitting an ARIMA model.</p>
+<pre class="r"><code>require(forecast)
+getScores &lt;- function(x, p, d, q, P, D, Q){
+    tryCatch({
+      model &lt;- Arima(x, order=c(p,d,q), seasonal=list(order=c(P,D,Q), period = 12))
+      return(data.frame(AIC = model$aic, AICc = model$aicc, BIC = model$bic))
+    }, error = function(cond){
+      print(cond); 
+      return(NA)
+    })
+}</code></pre>
+</div>
+<div id="fitting-arima-models" class="section level2">
+<h2>Fitting ARIMA Models</h2>
+<p>Now we can use <strong>adply()</strong> and <strong>transform</strong> to call the function for each row in our model specification data frame. It will append three new columns, one for each of our three selection criterion. Fitting 1000+ ARIMA models will take a while to compute. If you have a multi-core machine, you should consider doing the calculations in parallel to cut down on computation time. You will need to load up the <strong>foreach</strong> package and a parallel adapter back end package, such as <strong>doMC</strong> or <strong>doParallel</strong>. To save time, this tutorial includes a precomputed table of results which you can load using the <strong>load()</strong> function.</p>
+<pre class="r"><code>require(foreach)
+require(doMC)
+registerDOMC(2) # change to the number of cores you would like to use
+Arima.Models &lt;- adply(Arima.Models, 1, transform, score = getScores(ganges$Log.Flow.Standardized, p, d, q, P, D, Q), .parallel=TRUE, .progress=&quot;text&quot;)</code></pre>
+<p>To load the precomputed data, make sure you set the working directory to the <strong>TimeSeriesAnalysis</strong> folder. Use the <strong>setwd()</strong> command to do this. Finally, use the <strong>load()</strong> command to load the precomputed data.</p>
+<pre class="r"><code>load(&quot;objects/Arima.Models.Precomputed&quot;)
+head(Arima.Models)</code></pre>
+<pre><code>##   p d q P D Q score.AIC score.AICc score.BIC
+## 1 0 0 0 0 0 0  2682.231   2682.244  2691.940
+## 2 1 0 0 0 0 0  2038.705   2038.731  2053.268
+## 3 2 0 0 0 0 0  2040.703   2040.746  2060.121
+## 4 3 0 0 0 0 0  2035.557   2035.621  2059.829
+## 5 0 1 0 0 0 0  2183.927   2183.932  2188.781
+## 6 1 1 0 0 0 0  2165.160   2165.172  2174.866</code></pre>
+</div>
+<div id="model-screening" class="section level2">
+<h2>Model Screening</h2>
+<p>There are a few rows with <em>NA</em> values, which means that the ARIMA model did not converge. Let’s remove them using the built-in <strong>complete.cases()</strong> function.</p>
+<pre class="r"><code>print(paste(&quot;original number of rows:&quot;, nrow(Arima.Models)))
+Arima.Models &lt;- Arima.Models[complete.cases(Arima.Models),]
+print(paste(&quot;final number of rows:&quot;, nrow(Arima.Models)))</code></pre>
+<pre><code>## [1] &quot;original number of rows: 1152&quot;
+## [1] &quot;final number of rows: 1117&quot;</code></pre>
+<p>Now let’s take a look at our top performing models for AICc and BIC.</p>
+<div id="top-5-models-based-on-aicc" class="section level3">
+<h3>Top 5 Models Based On AICc</h3>
+<pre class="r"><code>pander(head(arrange(Arima.Models, score.AICc)[,-7], 5))</code></pre>
+<table>
+<colgroup>
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">p</th>
+<th align="center">d</th>
+<th align="center">q</th>
+<th align="center">P</th>
+<th align="center">D</th>
+<th align="center">Q</th>
+<th align="center">score.AICc</th>
+<th align="center">score.BIC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1973</td>
+<td align="center">2021</td>
+</tr>
+<tr class="even">
+<td align="center">3</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1974</td>
+<td align="center">2022</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1974</td>
+<td align="center">2018</td>
+</tr>
+<tr class="even">
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1974</td>
+<td align="center">2013</td>
+</tr>
+<tr class="odd">
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">3</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1975</td>
+<td align="center">2028</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="top-5-models-based-on-bic" class="section level3">
+<h3>Top 5 models Based on BIC</h3>
+<pre class="r"><code>pander(head(arrange(Arima.Models, score.BIC)[,-7], 5))</code></pre>
+<table>
+<colgroup>
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">p</th>
+<th align="center">d</th>
+<th align="center">q</th>
+<th align="center">P</th>
+<th align="center">D</th>
+<th align="center">Q</th>
+<th align="center">score.AICc</th>
+<th align="center">score.BIC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1978</td>
+<td align="center">2002</td>
+</tr>
+<tr class="even">
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1977</td>
+<td align="center">2006</td>
+</tr>
+<tr class="odd">
+<td align="center">2</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1977</td>
+<td align="center">2006</td>
+</tr>
+<tr class="even">
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">0</td>
+<td align="center">1983</td>
+<td align="center">2007</td>
+</tr>
+<tr class="odd">
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">1979</td>
+<td align="center">2008</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="pareto-selection" class="section level2">
+<h2>Pareto Selection</h2>
+<p>Unfortunately, no models appear in both sets. It is worth taking a look at a plot of BIC versus AICc.</p>
+<pre class="r"><code>g &lt;- ggplot(Arima.Models, aes(x=score.AICc, y=score.BIC)) + geom_point()
+g &lt;- g + xlab(&quot;AICc&quot;) + ylab(&quot;BIC&quot;) + ggtitle(&quot;BIC vs. AICc for Ganges ARIMA Models&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-34-1.png" /></p>
+<p>Let’s zoom into the bottom left corner.</p>
+<pre class="r"><code>g &lt;- g + xlim(1970, 2000) + ylim(2000, 2022) 
+g &lt;- g + ggtitle(&quot;BIC vs. AICc for Ganges ARIMA Models (Lower-Left Detail)&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-35-1.png" /></p>
+<p>The points that form the lower left-hand elbow form something of a Pareto frontier. They are the ‘non-inferior’ points. We will focus on these models in particular. To select them we need to <strong>arrange()</strong> the data frame, first by <strong>score.AICc</strong> and then by <strong>score.BIC</strong>. Then the cumulative minimum <strong>cummin()</strong> function can be used to reveal the non-inferior points. The duplicates (inferior points) are filtered out using <strong>duplicated()</strong>.</p>
+<pre class="r"><code># Sort by AICc, then by BIC
+top.sorted &lt;- arrange(Arima.Models, score.AICc, score.BIC) 
+# Grab non-inferior points.
+pareto.points = top.sorted[which(!duplicated(cummin(top.sorted$score.BIC))),] 
+head(pareto.points)</code></pre>
+<pre><code>##    p d q P D Q score.AIC score.AICc score.BIC
+## 1  2 0 2 2 0 2  1972.892   1973.127  2021.436
+## 3  3 0 2 1 0 1  1973.917   1974.109  2017.607
+## 4  2 0 2 1 0 1  1974.084   1974.238  2012.919
+## 13 2 1 2 1 0 1  1975.760   1975.880  2009.734
+## 16 1 1 2 1 0 1  1976.461   1976.550  2005.581
+## 30 1 1 1 1 0 1  1977.710   1977.774  2001.976</code></pre>
+<p>Now to get a sense of model complexity we will add a column that sums the number of variables. We will also add a column, <strong>xpos</strong> that will help us plot the text next to the points by storing a fixed offset. We will also add an Index which will serve as a shorthand identifier for each model.</p>
+<pre class="r"><code>pareto.points &lt;- transform(pareto.points, parameters = p+d+q+P+D+Q, xpos = score.AICc-1)
+pareto.points$Model &lt;- 1:nrow(pareto.points)
+head(pareto.points)</code></pre>
+<pre><code>##    p d q P D Q score.AIC score.AICc score.BIC parameters     xpos Model
+## 1  2 0 2 2 0 2  1972.892   1973.127  2021.436          8 1972.127     1
+## 3  3 0 2 1 0 1  1973.917   1974.109  2017.607          7 1973.109     2
+## 4  2 0 2 1 0 1  1974.084   1974.238  2012.919          6 1973.238     3
+## 13 2 1 2 1 0 1  1975.760   1975.880  2009.734          7 1974.880     4
+## 16 1 1 2 1 0 1  1976.461   1976.550  2005.581          6 1975.550     5
+## 30 1 1 1 1 0 1  1977.710   1977.774  2001.976          5 1976.774     6</code></pre>
+<p>Now we can highlight the points, to assure that our selection routine worked correctly. We will also add text citing the number of parameters used in the model.</p>
+<pre class="r"><code>g &lt;- g + ggtitle(&quot;Pareto Frontier of BIC versus AICc Selection Criteria \n Labeled With Number of Model Parameters&quot;)
+g &lt;- g + annotate(&quot;point&quot;, x=pareto.points$score.AICc, y=pareto.points$score.BIC, colour = &quot;#e51843&quot;, size = 5)
+g &lt;- g + annotate(&quot;text&quot;, x=pareto.points$xpos, y=pareto.points$score.BIC, label = pareto.points$parameters)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-38-1.png" /></p>
+</div>
+<div id="cross-evaluation" class="section level2">
+<h2>Cross-Evaluation</h2>
+<p>To narrow down the models, we will apply cross validation techniques the 6 models on the Pareto frontier. While <em>validation</em> is the most common word for this process, but the strength of that word can be misleading. We are really just <em>evaluating</em> the performance of our model by splitting the data into different sets for <strong>parameter estimation</strong> (or <strong>training</strong>) and measuring <strong>prediction errors</strong>. Specifically we will be taking a look at the:</p>
+<ul>
+<li>NSE - <a href="http://en.wikipedia.org/wiki/Nash–Sutcliffe_model_efficiency_coefficient">Nash Sutcliffe Efficiency</a> [<span class="math">\(- \infty\)</span>, 1]</li>
+<li>MAE - <a href="http://en.wikipedia.org/wiki/Mean_absolute_error">Mean Absolute Error</a> [0, <span class="math">\(\infty\)</span>]</li>
+<li>PBias - Percent Bias, a measure of the bias in our predictions [0, <span class="math">\(\infty\)</span>]</li>
+<li>CP - Coefficient of Persistence, a measure of how well a model performs as compared to a persistence model. [0, 1]</li>
+</ul>
+<p>We will split the time series into <strong>training</strong> and <strong>evaluation</strong> periods with 10 years of data at a time.</p>
+<pre class="r"><code>time.periods &lt;- data.frame(train.start = seq(min(ganges$Year), max(ganges$Year)-20, 10))
+
+time.periods &lt;- mutate(time.periods, train.stop = train.start + 9, 
+                                         evaluate.start = train.stop + 1,
+                                         evaluate.stop = evaluate.start + 9)
+pander(time.periods)</code></pre>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="18%" />
+<col width="23%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">train.start</th>
+<th align="center">train.stop</th>
+<th align="center">evaluate.start</th>
+<th align="center">evaluate.stop</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1934</td>
+<td align="center">1943</td>
+<td align="center">1944</td>
+<td align="center">1953</td>
+</tr>
+<tr class="even">
+<td align="center">1944</td>
+<td align="center">1953</td>
+<td align="center">1954</td>
+<td align="center">1963</td>
+</tr>
+<tr class="odd">
+<td align="center">1954</td>
+<td align="center">1963</td>
+<td align="center">1964</td>
+<td align="center">1973</td>
+</tr>
+<tr class="even">
+<td align="center">1964</td>
+<td align="center">1973</td>
+<td align="center">1974</td>
+<td align="center">1983</td>
+</tr>
+<tr class="odd">
+<td align="center">1974</td>
+<td align="center">1983</td>
+<td align="center">1984</td>
+<td align="center">1993</td>
+</tr>
+<tr class="even">
+<td align="center">1984</td>
+<td align="center">1993</td>
+<td align="center">1994</td>
+<td align="center">2003</td>
+</tr>
+</tbody>
+</table>
+<p>Now we will build a data frame to store the results. There is one row per combination of training period and model to evaluate.</p>
+<pre class="r"><code>cross.evaluation &lt;- expand.grid(Model.Index = 1:nrow(pareto.points), Time.Period = 1:nrow(time.periods))
+head(cross.evaluation)</code></pre>
+<pre><code>##   Model.Index Time.Period
+## 1           1           1
+## 2           2           1
+## 3           3           1
+## 4           4           1
+## 5           5           1
+## 6           6           1</code></pre>
+<p>In order to make predictions we will again make use of the <strong>forecast</strong> package. It has a method <strong>forecast()</strong> that will give predictions based on a previously fit model. The <strong>hydroGOF</strong> package contains functions for calculating the previously noted <em>goodness of fit</em> statistics.</p>
+<pre class="r"><code>require(hydroGOF)
+
+cross.evaluate &lt;- function(Model.Index, Time.Period){
+    train.start = time.periods[Time.Period, 1]
+    train.stop = time.periods[Time.Period, 2]
+    evaluate.start = time.periods[Time.Period, 3]
+    evaluate.stop = time.periods[Time.Period, 4]
+    model.parameters &lt;- unlist(subset(pareto.points, Model == Model.Index)[1:6])
+    train.data &lt;- subset(ganges, 
+                    Year &gt;= train.start &amp; Year &lt;= train.stop)$Log.Flow.Standardized
+    eval.data &lt;- subset(ganges, Year &gt;= evaluate.start &amp; Year &lt;= evaluate.stop)
+    tryCatch({
+      fit &lt;- Arima(train.data, order = model.parameters[1:3], 
+                   seasonal = list(order = model.parameters[4:6], period = 12))
+      eval.data$pred &lt;- forecast(fit, h = 120)$fitted     # forecast 120 months ahead
+      eval.data &lt;- mutate(eval.data,  
+      pred.unstandardized = pred * Log.Flow.M.SD + Log.Flow.M.Mean, 
+      pred.untransformed = exp(pred.unstandardized))
+      obs &lt;- eval.data$Flow
+      sim &lt;- eval.data$pred.untransformed
+      results &lt;- data.frame(NSE = NSeff(sim, obs),
+                            MAE = mae(sim, obs),
+                            PBias = pbias(sim, obs),
+                            CP = cp(sim, obs))
+      return(results)
+    }, error = function(cond){
+      print(cond); 
+      return(data.frame(NSE = NA, MAE = NA, PBias = NA, CP = NA))
+    })
+
+}</code></pre>
+<p>The <strong>adply()</strong> function allows us to compactly run the cross evaluation routine for each combination of training period and model.</p>
+<pre class="r"><code>cross.evaluation &lt;- adply(cross.evaluation, 1, transform, p = cross.evaluate(Model.Index, Time.Period))</code></pre>
+<p>For the purposes of this exercise we are not interested in models that do not converge across all training periods. First we will remove the results of simulations that did not converge. Then we will count the number of simulations which converged for a given model.</p>
+<pre class="r"><code>cross.evaluation &lt;- cross.evaluation[complete.cases(cross.evaluation),]
+convergence.counts &lt;- ddply(cross.evaluation, &quot;Model.Index&quot;, summarize, Convergence.Counts = sum (Time.Period &gt; 0))
+pander(convergence.counts)</code></pre>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="27%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Model.Index</th>
+<th align="center">Convergence.Counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1</td>
+<td align="center">4</td>
+</tr>
+<tr class="even">
+<td align="center">2</td>
+<td align="center">5</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">6</td>
+</tr>
+<tr class="even">
+<td align="center">4</td>
+<td align="center">5</td>
+</tr>
+<tr class="odd">
+<td align="center">5</td>
+<td align="center">5</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="center">6</td>
+</tr>
+</tbody>
+</table>
+<p>Finally, we’ll take a closer look at the models that converged across all 6 time periods by further tidying and filtering the results.</p>
+<pre class="r"><code>cross.evaluation &lt;- join(cross.evaluation, convergence.counts, by = &quot;Model.Index&quot;)
+cross.evaluation &lt;- subset(cross.evaluation, Convergence.Counts == nrow(time.periods))
+cross.evaluation &lt;- arrange(cross.evaluation, Model.Index)
+cross.evaluation &lt;- cross.evaluation[, -length(cross.evaluation)]
+colnames(cross.evaluation) &lt;- c(&quot;Model.Index&quot;, &quot;Time.Period&quot;, &quot;NSE&quot;, &quot;MAE&quot;, &quot;Bias&quot;, &quot;CP&quot;)
+pander(cross.evaluation)</code></pre>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="19%" />
+<col width="8%" />
+<col width="8%" />
+<col width="9%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Model.Index</th>
+<th align="center">Time.Period</th>
+<th align="center">NSE</th>
+<th align="center">MAE</th>
+<th align="center">Bias</th>
+<th align="center">CP</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">1</td>
+<td align="center">0.912</td>
+<td align="center">2275</td>
+<td align="center">-10.7</td>
+<td align="center">0.851</td>
+</tr>
+<tr class="even">
+<td align="center">3</td>
+<td align="center">2</td>
+<td align="center">0.847</td>
+<td align="center">3333</td>
+<td align="center">-17.9</td>
+<td align="center">0.723</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">3</td>
+<td align="center">0.692</td>
+<td align="center">3613</td>
+<td align="center">31.1</td>
+<td align="center">0.484</td>
+</tr>
+<tr class="even">
+<td align="center">3</td>
+<td align="center">4</td>
+<td align="center">0.851</td>
+<td align="center">3192</td>
+<td align="center">-3.3</td>
+<td align="center">0.763</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">5</td>
+<td align="center">0.888</td>
+<td align="center">2657</td>
+<td align="center">1.1</td>
+<td align="center">0.827</td>
+</tr>
+<tr class="even">
+<td align="center">3</td>
+<td align="center">6</td>
+<td align="center">0.857</td>
+<td align="center">3126</td>
+<td align="center">-19.1</td>
+<td align="center">0.730</td>
+</tr>
+<tr class="odd">
+<td align="center">6</td>
+<td align="center">1</td>
+<td align="center">0.906</td>
+<td align="center">2325</td>
+<td align="center">-8.6</td>
+<td align="center">0.842</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="center">2</td>
+<td align="center">0.845</td>
+<td align="center">3415</td>
+<td align="center">-17.3</td>
+<td align="center">0.719</td>
+</tr>
+<tr class="odd">
+<td align="center">6</td>
+<td align="center">3</td>
+<td align="center">0.689</td>
+<td align="center">3642</td>
+<td align="center">30.6</td>
+<td align="center">0.480</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="center">4</td>
+<td align="center">0.858</td>
+<td align="center">3135</td>
+<td align="center">-3.9</td>
+<td align="center">0.774</td>
+</tr>
+<tr class="odd">
+<td align="center">6</td>
+<td align="center">5</td>
+<td align="center">0.892</td>
+<td align="center">2687</td>
+<td align="center">3.8</td>
+<td align="center">0.834</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="center">6</td>
+<td align="center">0.860</td>
+<td align="center">3109</td>
+<td align="center">-17.5</td>
+<td align="center">0.735</td>
+</tr>
+</tbody>
+</table>
+<p>It’s hard to tell from the table how similar the two models are. However, with a bit of work we can put all of the <em>goodness of fit</em> statistics on a single plot.</p>
+<pre class="r"><code>shapes = c(15, 16, 17, 9, 12, 8)
+g1 &lt;- ggplot(cross.evaluation, aes(factor(Model.Index), NSE)) 
+g1 &lt;- g1 + geom_boxplot(outlier.shape = NA, fill = &quot;white&quot;, colour = &quot;grey60&quot;, alpha = 0.9)
+g1 &lt;- g1 + theme(legend.position = &quot;bottom&quot;) + theme(legend.title = element_text(size = rel(1.2), face = &quot;plain&quot;))
+g1 &lt;- g1 + guides(shape = guide_legend(title= &quot;Evaluation Time Period&quot;))
+g1 &lt;- g1 + geom_jitter(size = 3, aes(shape = factor(Time.Period)))
+g1 &lt;- g1 + annotate(&quot;line&quot;, y = 1, x=seq(0,3), colour = &quot;#e51843&quot;, alpha = 0.7, size = 3) 
+g1 &lt;- g1 + ylab(&quot;Nash-Sutcliffe Efficiency&quot;) + xlab(&quot;Model Number&quot;) 
+g1 &lt;- g1 + scale_shape_manual(values = shapes)
+
+# See https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs. 
+legend &lt;- ggplot_gtable(ggplot_build(g1))
+index &lt;- which(sapply(legend$grobs, function(x) x$name) == &quot;guide-box&quot;)
+legend &lt;- legend$grobs[[index]]
+g1 &lt;- g1 + theme(legend.position = &quot;none&quot;)
+
+g2 &lt;- ggplot(cross.evaluation, aes(factor(Model.Index), MAE))
+g2 &lt;- g2 + geom_boxplot(outlier.shape = NA, fill = &quot;white&quot;, colour = &quot;grey60&quot;, alpha = 0.9)
+g2 &lt;- g2 + geom_jitter(size = 3, aes(shape = factor(Time.Period)))
+g2 &lt;- g2 + annotate(&quot;line&quot;, y = 0, x=seq(0,3), colour = &quot;#e51843&quot;, alpha = 0.7, size = 3) 
+g2 &lt;- g2 + ylab(&quot;Mean Absolute Error&quot;) + xlab(&quot;Model Number&quot;) + theme(legend.position = &quot;none&quot;)
+g2 &lt;- g2 + scale_shape_manual(values = shapes)
+
+g3 &lt;- ggplot(cross.evaluation, aes(factor(Model.Index), Bias))
+g3 &lt;- g3 + geom_boxplot(outlier.shape = NA, fill = &quot;white&quot;, colour = &quot;grey60&quot;, alpha = 0.9)
+g3 &lt;- g3 + geom_jitter(size = 3, aes(shape = factor(Time.Period)))
+g3 &lt;- g3 + annotate(&quot;line&quot;, y = 0, x=seq(0,3), colour = &quot;#e51843&quot;, alpha = 0.7, size = 3) 
+g3 &lt;- g3 + ylab(&quot;Percent Bias&quot;) + xlab(&quot;Model Number&quot;) + theme(legend.position = &quot;none&quot;)
+g3 &lt;- g3 + scale_shape_manual(values = shapes)
+
+g4 &lt;- ggplot(cross.evaluation, aes(factor(Model.Index), CP)) 
+g4 &lt;- g4 + geom_boxplot(outlier.shape = NA, fill = &quot;white&quot;, colour = &quot;grey60&quot;, alpha = 0.9)
+g4 &lt;- g4 + geom_jitter(size = 3, aes(shape = factor(Time.Period)))
+g4 &lt;- g4 + annotate(&quot;line&quot;, y = 1, x=seq(0,3), colour = &quot;#e51843&quot;, alpha = 0.7, size = 3) 
+g4 &lt;- g4 + ylab(&quot;Coefficient of Persistence&quot;) + xlab(&quot;Model Number&quot;) + theme(legend.position = &quot;none&quot;)
+g4 &lt;- g4 + scale_shape_manual(values = shapes)
+
+graphs &lt;- arrangeGrob(g1, g2, g3, g4, ncol = 2, nrow = 2)
+grid.arrange(graphs, legend, nrow = 2, main = &quot;Comparing Model Goodness of Fit&quot;, heights = c(10, 1))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-45-1.png" /></p>
+<p>In the plot above the ideal goodness of fit is shown as a red line. The results are superimposed on the box-plots with shapes assigned by the evaluation time period. The patterns of the shapes suggest that in any given time period, the models performed almost identically.</p>
+</div>
+<div id="final-selection" class="section level2">
+<h2>Final Selection</h2>
+<p>So which orders of ARIMA parameters were used to fit these models?</p>
+<pre class="r"><code>results &lt;- data.frame( Model = 1:nrow(pareto.points))
+results &lt;- join(results, pareto.points, by = &quot;Model&quot;)
+results &lt;- results[c(1:7, 11)]
+results &lt;- subset(results, Model == unique(cross.evaluation$Model.Index))
+rownames(results) &lt;- NULL
+pander(results)</code></pre>
+<table>
+<colgroup>
+<col width="11%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="5%" />
+<col width="16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Model</th>
+<th align="center">p</th>
+<th align="center">d</th>
+<th align="center">q</th>
+<th align="center">P</th>
+<th align="center">D</th>
+<th align="center">Q</th>
+<th align="center">parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">2</td>
+<td align="center">0</td>
+<td align="center">2</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">6</td>
+</tr>
+<tr class="even">
+<td align="center">6</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">1</td>
+<td align="center">0</td>
+<td align="center">1</td>
+<td align="center">5</td>
+</tr>
+</tbody>
+</table>
+<p>There is no clear winner here. Parsimony would favor the model with fewer parameters. However in this case the difference is a single parameter. Nevertheless, the results suggest that it is worth reviewing models with <span class="math">\(P = 1, D = 0, Q = 1\)</span>. Perhaps that is a mission for another day. For now, we will conclude this exercise.</p>
+<br>
+<hr>
+</div>
+</div>
+<div id="reproducibility-information" class="section level1">
+<h1>Reproducibility Information</h1>
+<pre class="r"><code>print(paste(&quot;This page was generated on:&quot;, system(&quot;date&quot;, intern = TRUE)))</code></pre>
+<pre><code>## [1] &quot;This page was generated on: Sun Nov 23 20:07:04 EST 2014&quot;</code></pre>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.1.2 (2014-10-31)
+## Platform: x86_64-apple-darwin13.4.0 (64-bit)
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] grid      stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] hydroGOF_0.3-8   forecast_5.6     timeDate_3011.99 zoo_1.7-11      
+##  [5] gridExtra_0.9.1  pander_0.5.1     ggplot2_1.0.0    plyr_1.8.1      
+##  [9] reshape2_1.4     animation_2.3    knitr_1.7.10    
+## 
+## loaded via a namespace (and not attached):
+##  [1] automap_1.0-14   class_7.3-11     colorspace_1.2-4 digest_0.6.4    
+##  [5] e1071_1.6-4      evaluate_0.5.5   FNN_1.1          formatR_1.0     
+##  [9] fracdiff_1.4-2   gstat_1.0-20     gtable_0.1.2     htmltools_0.2.6 
+## [13] hydroTSM_0.4-2-1 intervals_0.15.0 labeling_0.3     lattice_0.20-29 
+## [17] MASS_7.3-35      munsell_0.4.2    nnet_7.3-8       parallel_3.1.2  
+## [21] proto_0.3-10     quadprog_1.5-5   Rcpp_0.11.3      reshape_0.8.5   
+## [25] rmarkdown_0.3.10 scales_0.2.4     sp_1.0-16        spacetime_1.0-10
+## [29] stringr_0.6.2    tools_3.1.2      tseries_0.10-32  xts_0.9-7       
+## [33] yaml_2.1.13</code></pre>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
