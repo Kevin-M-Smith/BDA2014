@@ -25,7 +25,7 @@ __Kevin M. Smith // Big Data Analytics // Fall 2014__
 
 
 # Overview
-This tutorial explores basic data manipulation and time series analysis techniques.  The data set is a complete record of the mean monthly flows of the Ganges from January 1934 to December 2013. The source code and data for this tutorial is available [here](http://www.github.com/Kevin-M-Smith/BDA2014/TimeSeriesAnalysis). The most recent web version of this document is available [here](http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis).
+This tutorial explores basic data manipulation and time series analysis techniques.  The data set is a complete record of the mean monthly flows of the Ganges from January 1934 to December 2013. The source code and data for this tutorial is available [here](https://github.com/Kevin-M-Smith/BDA2014/tree/master/TimeSeriesAnalysis). The most recent web version of this document is available [here](http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis).
 
 
 <hr>
@@ -931,7 +931,7 @@ print(paste("This page was generated on:", system("date", intern = TRUE)))
 ```
 
 ```
-## [1] "This page was generated on: Sun Nov 23 20:07:04 EST 2014"
+## [1] "This page was generated on: Sun Nov 23 20:22:48 EST 2014"
 ```
 
 ```r
