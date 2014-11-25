@@ -37,12 +37,12 @@ Definitions
 ========================================================
 
 - Dynamic Documents
-  - Input and output are linked
+  - input and output are linked
   - a change in the input propogates through the document
 - Literate Programming
-  - The Practice of Mixing Natural Languages with Programming Langauges
-- Reproducible Research (for computational experiments)
-  - An emerging set of best practices, including __open and complete documentation of data sets and code__, documenting computational environments, random number generator seeds, etc.
+  - the practice of interleaving __natural languages__ and __programming languages__ in such a way that the program still runs
+- Reproducible Research _(especially for computational experiments)_
+  - an emerging set of best practices, including __open and complete documentation of data sets and code__, documenting computational environments, random number generator seeds, etc.
 
 What is R?
 ========================================================
@@ -63,7 +63,7 @@ cor(X, Y)
 ```
 
 ```
-[1] 0.8440621
+[1] 0.8451758
 ```
 <br>
 ### __Query:__
