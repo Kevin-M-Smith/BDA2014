@@ -359,7 +359,13 @@ References
  * H. Jeffreys, Theory of probability, 3rd ed. Oxford [Oxfordshire]: New York: Clarendon Press; Oxford University Press, 1998.
 
 
+Reproducibility Information
+================================
 
+```{r, echo = FALSE, message=FALSE}
+require(pander)
+pander(sessionInfo())
+```
 
 
 

@@ -29,8 +29,8 @@ code > span.fu { color: #06287e; }
 code > span.er { color: #ff0000; font-weight: bold; }
   </style>
   <link rel="stylesheet" type="text/css" media="screen, projection, print"
-    href="OccamsRazor_files/Slidy2/styles/slidy.css" />
-  <script src="OccamsRazor_files/Slidy2/scripts/slidy.js"
+    href="index_files/Slidy2/styles/slidy.css" />
+  <script src="index_files/Slidy2/scripts/slidy.js"
     charset="utf-8" type="text/javascript"></script>
 </head>
 <body>
@@ -122,7 +122,7 @@ prior.M1 &lt;-<span class="st"> </span>function(temperature){
                   <span class="dt">label =</span> <span class="st">&quot;Prior 1&quot;</span>),
                   <span class="dt">color =</span> <span class="st">&quot;orange&quot;</span>, <span class="dt">size =</span> <span class="dv">8</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Likelihood&quot;</span>)
 g</code></pre>
-<p><img src="OccamsRazor_files/figure-slidy/unnamed-chunk-7-1.png" title="" alt="" width="672" /></p>
+<p><img src="index_files/figure-slidy/unnamed-chunk-7-1.png" title="" alt="" width="672" /></p>
 </div>
 <div id="likelihood-of-measuring-t_m-given-thermometer-parameters" class="slide section level1">
 <h1>Likelihood of Measuring <span class="math">\(t_m\)</span> Given Thermometer Parameters</h1>
@@ -156,7 +156,7 @@ measurement.error =<span class="st"> </span><span class="dv">1</span></code></pr
                   <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">size =</span> <span class="dv">8</span>)
 
 g</code></pre>
-<p><img src="OccamsRazor_files/figure-slidy/unnamed-chunk-10-1.png" title="" alt="" width="672" /></p>
+<p><img src="index_files/figure-slidy/unnamed-chunk-10-1.png" title="" alt="" width="672" /></p>
 </div>
 <div id="posterior-likelihood-of-t-given-thermometer-parameters-and-model-m_i" class="slide section level1">
 <h1>Posterior Likelihood of <span class="math">\(t\)</span> Given Thermometer Parameters and Model <span class="math">\(M_{i}\)</span></h1>
@@ -206,7 +206,7 @@ g</code></pre>
           <span class="dt">label =</span> <span class="st">&quot;Posterior 1&quot;</span>),
           <span class="dt">color =</span> <span class="st">&quot;darkgreen&quot;</span>, <span class="dt">size =</span> <span class="dv">8</span>)
 g</code></pre>
-<p><img src="OccamsRazor_files/figure-slidy/unnamed-chunk-12-1.png" title="" alt="" width="672" /></p>
+<p><img src="index_files/figure-slidy/unnamed-chunk-12-1.png" title="" alt="" width="672" /></p>
 </div>
 <div id="bayesian-model-selection" class="slide section level1">
 <h1>Bayesian Model Selection</h1>
@@ -240,7 +240,7 @@ prior.M2 &lt;-<span class="st"> </span>function(temperature){
           <span class="dt">label =</span> <span class="st">&quot;Posterior 2&quot;</span>),
           <span class="dt">color =</span> <span class="st">&quot;darkblue&quot;</span>, <span class="dt">size =</span> <span class="dv">8</span>)
 g</code></pre>
-<p><img src="OccamsRazor_files/figure-slidy/unnamed-chunk-14-1.png" title="" alt="" width="672" /></p>
+<p><img src="index_files/figure-slidy/unnamed-chunk-14-1.png" title="" alt="" width="672" /></p>
 <p><em>N.B.</em> Remember that the posteriors are not normalized, so their respective maximum values cannot be compared directly.</p>
 <ul>
 <li><p>The plot is getting a bit cluttered, but a close examination will reveal that as <span class="math">\(\sigma_{p, i}\)</span> decreases, the most probable posterior value of <span class="math">\(t_{c, i}\)</span> shifts towards the most probable value of the prior <span class="math">\(t_{p, i}\)</span>.</p></li>
@@ -365,6 +365,16 @@ K =<span class="st"> </span>evidence.for.m1 /<span class="st"> </span>evidence.f
 <li><p>S. S. Leroy, “Detecting climate signals: Some Bayesian aspects,” Journal of climate, vol. 11, no. 4, pp. 640–651, 1998.</p></li>
 <li><p>H. Jeffreys, Theory of probability, 3rd ed. Oxford [Oxfordshire]: New York: Clarendon Press; Oxford University Press, 1998.</p></li>
 </ul>
+</div>
+<div id="reproducibility-information" class="slide section level1">
+<h1>Reproducibility Information</h1>
+<pre><code>## Loading required package: pander</code></pre>
+<p><strong>R version 3.1.2 (2014-10-31)</strong></p>
+<p><strong>Platform:</strong> x86_64-apple-darwin13.4.0 (64-bit)</p>
+<p><strong>locale:</strong></p>
+<p><strong>attached base packages:</strong> [1] “<em>stats</em>, <em>graphics</em>, <em>grDevices</em>, <em>utils</em>, <em>datasets</em>, <em>methods</em> and <em>base</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>other attached packages:</strong> [1] “<em>pander(v.0.5.1)</em>, <em>ggplot2(v.1.0.0)</em> and <em>knitr(v.1.8)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>loaded via a namespace (and not attached):</strong> [1] “<em>colorspace(v.1.2-4)</em>, <em>digest(v.0.6.4)</em>, <em>evaluate(v.0.5.5)</em>, <em>formatR(v.1.0)</em>, <em>grid(v.3.1.2)</em>, <em>gtable(v.0.1.2)</em>, <em>htmltools(v.0.2.6)</em>, <em>labeling(v.0.3)</em>, <em>MASS(v.7.3-35)</em>, <em>munsell(v.0.4.2)</em>, <em>plyr(v.1.8.1)</em>, <em>proto(v.0.3-10)</em>, <em>Rcpp(v.0.11.3)</em>, <em>reshape2(v.1.4.1)</em>, <em>rmarkdown(v.0.3.10)</em>, <em>scales(v.0.2.4)</em>, <em>stringr(v.0.6.2)</em>, <em>tools(v.3.1.2)</em> and <em>yaml(v.2.1.13)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
 </div>
 
   <!-- dynamically load mathjax for compatibility with self-contained -->
