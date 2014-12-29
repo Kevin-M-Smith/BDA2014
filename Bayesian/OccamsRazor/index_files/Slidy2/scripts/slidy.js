@@ -154,7 +154,7 @@ var w3c_slidy = {
 
     this.toc = this.table_of_contents();
 
-    this.add_initial_prompt();
+    // this.add_initial_prompt();
 
     // bind event handlers without interfering with custom page scripts
     // Tap events behave too weirdly to support clicks reliably on
