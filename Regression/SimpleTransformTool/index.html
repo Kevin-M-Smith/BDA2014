@@ -1,0 +1,262 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/c3.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="css/jquery.ui.spinner.css">
+    <link rel="stylesheet" type="text/css" href="css/jquery.ui.slidespinner.css">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Cabin">
+    
+    <style>
+		.wrapper { margin: 20px; }
+   		.controls { position: relative; }
+   		.controls div { position: absolute; font-size: 7pt; }
+   		.ui-spinner-horizontal{ margin-bottom: 20px; }
+   		.ui-slider-horizontal .ui-state-default { height: 3em; background: #e51843; }
+		#spinnery input { width: 4em; height: 2em; }
+		#spinnerx input { width: 4em; height: 2em; }
+		
+
+.fileContainer [type=file] {
+    cursor: inherit;
+    filter: {opacity: 0};
+    opacity: 0;
+    right: 0;
+    top: 0;
+}
+
+
+body {
+	font-family: Cabin;
+}
+
+button
+{
+	display: block;
+	font-size: 1.1em;
+	font-weight: bold;
+	text-transform: uppercase;
+	padding: 10px 15px;
+	margin: 20px auto;
+	color: #ccc;
+	background-color: #555;
+	background: -webkit-linear-gradient(#888, #555);
+	background: linear-gradient(#888, #555);
+	border: 0 none;
+	border-radius: 3px;
+	text-shadow: 0 -1px 0 #000;
+	box-shadow: 0 1px 0 #666, 0 5px 0 #444, 0 6px 6px rgba(0,0,0,0.6);
+	cursor: pointer;
+	-webkit-transition: all 150ms ease;
+	transition: all 150ms ease;
+}
+
+button:active
+{
+	color: #fff;
+	text-shadow: 0 -1px 0 #444, 0 0 5px #ffd, 0 0 8px #fff;
+	box-shadow: 0 1px 0 #666, 0 2px 0 #444, 0 2px 2px rgba(0,0,0,0.9);
+	-webkit-transform: translateY(3px);
+	transform: translateY(3px);
+	-webkit-animation: none;
+	animation: none;
+}
+
+h1, h2, h3{
+	padding: 2px 20px;
+}
+
+
+   .tg  {border-collapse:collapse;border-spacing:0;border-color:#999;margin:0px auto;}
+   .tg td{font-family:Cabin, sans-serif;font-size:14px;padding: 5px 20px; 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#999;color:#444;background-color:#F7FDFA;}
+   .tg th{font-family:Cabin, sans-serif;font-size:16px;font-weight:bold;padding:10px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#999;color:#fff;background-color:#26ADE4;}
+   td {text-align:center}
+
+
+
+td{
+	text-align: left;
+}
+</style>
+
+
+
+    
+  </head>
+
+
+
+  <body>
+	<h1> Simple Linear Regression Transform Tool</h1>
+	<h3> Observations (colored by leverage) and Predictions in Transform Space <h3> 
+	<div id="dataPlot"></div>
+	<h3> Ordinary and Leave-One-Out Residuals in Transform Space <h3>   
+    <div id="residPlot"></div>
+    <hr>
+    
+    <table style="undefined;table-layout: fixed; width: 100%">
+<colgroup>
+<col style="width: 60%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 8%">
+</colgroup>
+  <tr>
+    <th><h2>Fitted Model</h2></th>
+    <th colspan="4"><h2>Summary</h2></th>
+  </tr>
+  <tr>
+    <td rowspan="3"><div id="equation" style="font-size: 0.6em; text-align: center;">\(y=\beta_1 \cdot x + \beta_0 + \epsilon\)<div> </td>
+    <td><div style="font-size: 0.5em"> \(R^{2}\)</div></td>
+    <td><div id="or2"></div></td>
+    <td><div style="font-size: 0.5em">\(PRESS\)</div></td>
+    <td><div id="opress"></div></td>
+  </tr>
+  <tr>
+    <td><div style="font-size: 0.5em"> \(SS_{reg}\) </div></td>
+    <td><div id="ossreg"></div></td>
+    <td><div style="font-size: 0.5em">\(NSE_{trans}\)</div></td>
+    <td><div id="otnse"></div></td>
+  </tr>
+  <tr>
+    <td><div style="font-size: 0.5em"> \(SS_{res}\) </div></td>
+    <td><div id="ossres"></div></td>
+    <td><div style="font-size: 0.5em">\(NSE_{real}\)</div></td>
+    <td><div id="ornse"></div></td>
+  </tr>
+</table>
+    <hr>
+    
+    
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+    	var x, x0, y, y0, ones, yhat, residuals, hat, betas, dataPlot, residPlot, file, slidery, sliderx, hd, mp, r2, sst, ssm, sse, r2s, ybar, xpower, ypower, r2yPlot, r2xPlot, best, token, equation_reference, loo, y0bar, y0sd, realresiduals, yhatreal, y0bars, realssm, realsse, realnse, nse, mse, realmse, realdataPlot, realresidPlot;
+    	
+    	var xrange0 = 0.1, xrange1 = 5;
+    	var yrange0 = 0.1, yrange1 = 5;
+    	
+    	var hasHeader = false; 
+    	
+    	var debug = "";
+    	
+    </script>
+    <script src="js/c3.js"></script>
+    <script src="js/numeric-1.2.6.min.js"></script>
+    <script src="js/papaparse.min.js"></script>
+    <script src="js/jquery.ui.spinner.js"></script>
+    <script src="js/jquery.ui.slidespinner.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+   
+    <script type="text/javascript">    
+  MathJax.Hub.Config({    
+    extensions: ["tex2jax.js"],    
+    "HTML-CSS": { scale: 300}    
+  });    
+</script>
+
+<script src="js/regression.js"></script>
+
+<div id="bigtable">
+<h2> Control Panel <h2>
+<table class="tg" style="width: 100%;">
+   <tr>
+      <td><h3>Fine Adjustment</h3></th>
+      <td><h3>Rough Adjustment</h3></th>
+      <td><h3><div style="font-size: 0.5em; display:inline;">\(R^{2}\)</div> vs. Transform</h3></th>
+   </tr>
+   <tr>
+      <td class="tg-s6z2" style="width: 150px;">
+         <div id="spinnerx" style="height: 2.5em;">\(_{_{x}}(\)
+            <input value="1"/>\()\)
+         </div>
+      </td>
+      <td class="tg-s6z2">
+         <div id="sliderx" style="height: 2.5em; width: 100%;"></div>
+      </td>
+             <td class="tg-s6z2">
+         <div id="r2x" style="height: 12em; width: 100%;"></div>
+      </td>
+      
+   </tr>
+   <tr>
+      <td class="tg-s6z2" style="width: 150px">
+            <div id="spinnery" style="height: 2.5em;">\(_{_{y}}(\)
+            <input value="1"/>\()\)
+         </div>
+      </td>
+      <td class="tg-s6z2">
+         <div id="slidery" style="height: 2.5em; width: 100%;"></div>
+      </td>
+       <td class="tg-s6z2">
+         <div id="r2y" style="height: 12em; width: 100%;"></div>
+      </td>
+      
+   </tr>
+<tr> 
+   
+   <td style="height:100px !important;"> <button type="button" onclick="scan();">Quick Search</button> </td>
+   		<td> <button type="button" onclick="ascan();">Animated Search</button> </td> <td>  <label for="x-search-range-text">Powers of x to search:</label>
+   		  <input type="text" id="x-search-range-text" readonly style="border:0; font-weight:bold; background: #F7FDFA; font-size:1.2em;">
+		<div id="x-search-range" style="height: 2.5em;"></div>
+</td>
+   </tr>
+   <tr>
+   <td>
+   <!--<input type="checkbox" id="hasHeader"/> File has a header row. -->
+   <h3> Data uploader. </h3>
+   Please remove any header row.<br> Use two column format: [x, y].</td><td>
+<button style="
+    padding-bottom: 10px;
+    padding-top: 10px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    width: 150px;
+    height: 40px;
+"><label class="fileContainer">Upload .CSV<input type="file" id="csv" name="files">
+         </label></button></td> <td>  <label for="y-search-range-text">Powers of y to search:</label>
+   		  <input type="text" id="y-search-range-text" readonly style="border:0; font-weight:bold; background: #F7FDFA; font-size:1.2em;">
+		<div id="y-search-range" style="height: 2.5em;"></div>
+</td>
+   </tr>
+</table>
+<h2> Random Data Generator </h2>
+<table class="tg">
+ <tr>
+   	<td><input type="radio" name="fam" id="lin"></td><td><div style="font-size: 0.5em; display:inline;">\(y=\beta_{1}\cdot x+\beta_{0}+\epsilon\)
+   	</div></td>
+   	
+   	<td><input type="radio" name="fam" id="lino"></td><td><div style="font-size: 0.5em; display:inline;">\(y=\beta_{1}\cdot x+\beta_{0}+\epsilon\)
+   	</div><br> ( with outlier )</br></td>
+   
+   	<td><input type="radio" name="fam" id="exp"></td><td><div style="font-size: 0.5em; display:inline;">\(y=\beta_{1}e^{x}+\beta_{0}+\epsilon\)
+   	</div></td>
+</tr>
+<tr>
+   	<td><input type="radio" name="fam" id="x3"></td><td><div style="font-size: 0.5em; display:inline;">\(y=\beta_{1}x^{3}+\beta_{0}+\epsilon\)
+   	</div></td>
+   	<td><input type="radio" name="fam" id="noise"></td><td><div style="font-size: 0.5em; display:inline;">\(y=\epsilon_{i},\,x=\epsilon_{j}\)
+   	</div></td>
+   	<td colspan=2><button onclick="generateData()">Generate Data</button></td>
+   </tr>
+</table>
+</div>
+<hr>
+<h2> Real Space Plots </h2>
+<h3> Observations and Predictions in Real Space <h3>   
+    	<div id="realdataPlot"></div>
+<h3> Prediction Errors in Real Space <h3>   
+    	<div id="realresidPlot"></div>
+
+
+ </body>
+  
+</html>
+
+    
+    
+    
+    
+    

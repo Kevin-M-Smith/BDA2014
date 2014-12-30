@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Vignette: Spurious Correlation</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Vignette: Spurious Correlation</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#type-i">Type I</a><ul>
+<li><a href="#example---sunspots">Example - Sunspots</a></li>
+</ul></li>
+<li><a href="#type-ii">Type II</a><ul>
+<li><a href="#example-i---spurious-correlation">Example I - Spurious Correlation</a><ul>
+<li><a href="#data-from-the-wild">Data from the Wild</a></li>
+<li><a href="#random-data">Random Data</a></li>
+</ul></li>
+<li><a href="#example-ii---spurious-uncorrelation">Example II - Spurious Uncorrelation</a><ul>
+<li><a href="#reflection-questions">Reflection Questions</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+<li><a href="#appendix">Appendix</a><ul>
+<li><a href="#desireable-weight-tables">Desireable Weight Tables</a><ul>
+<li><a href="#men">Men</a></li>
+<li><a href="#women">Women</a></li>
+</ul></li>
+<li><a href="#mlb-and-miss-america">MLB and Miss America</a><ul>
+<li><a href="#miss-america-pageant-winners">Miss America Pageant Winners</a></li>
+<li><a href="#major-league-baseball">Major League Baseball</a></li>
+</ul></li>
+<li><a href="#reproducibility-information">Reproducibility Information</a></li>
+</ul></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<strong>Kevin M. Smith // Environmental Statistics // Fall 2014</strong>
+<hr>
+<pre class="r"><code>library(knitr)
+library(ggplot2)
+library(xtable)
+library(gridExtra)
+library(pander)
+
+opts_knit$set(fig.width = 10,
+              xtable.type = &#39;html&#39;,
+              warning = FALSE,
+              cache = TRUE,
+              dev = &#39;png&#39;)
+
+
+options(xtable.comment = FALSE)
+panderOptions(&#39;table.split.table&#39;, Inf)</code></pre>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>The purpose of this short note is to explore spurious correlation. There are two common uses of the phrase <em>spurious correlation</em>, which are referred to here as Type I and Type II.</p>
+</div>
+<div id="type-i" class="section level1">
+<h1>Type I</h1>
+<p>Most often the phrase refers to the appearance of <strong>a strong relationship between two variables to which no shared causal driver can be reasonably proposed</strong>. These apparent relationships arise as a natural consequence of looking for relationships across many variables, especially when sub-setting.</p>
+<div id="example---sunspots" class="section level2">
+<h2>Example - Sunspots</h2>
+<p>A popular example is the correlation between sunspot activity and the number of Republicans in the U.S. Senate observed between 1960 and 1980. Proposing a shared causal driver here is a tenuous undertaking. It is more reasonable to propose that the two highly oscillatory series came into sync for about two decades by chance, before diverging again. The graphs below show how the choice of data subset has dramatic consequences on the cross-correlation of the series.</p>
+<pre class="r"><code>sunspots &lt;- read.csv(&#39;data/sunspots.csv&#39;)
+republicans &lt;- read.csv(&#39;data/senateRepublicans.csv&#39;)
+sr.df1 &lt;- data.frame(`annual sunspot count` = sunspots[,2], `number of republicans in senate` = republicans[,2])
+sr.df2 &lt;- data.frame(`annual sunspot count` = sunspots[61:81,2], `number of republicans in senate` = republicans[61:81,2])
+
+gt &lt;- ggplot(sunspots, aes(y = scale(sunspots[,2]), x = sunspots[,1], color = &quot;sunspots&quot;))
+gt &lt;- gt + geom_line(lwd = 2)
+gt &lt;- gt + geom_line(aes(y = scale(republicans[,2]), color = &quot;republicans&quot;), lwd=2)
+gt &lt;- gt + scale_colour_manual(name=&#39;&#39;, values=c(&#39;sunspots&#39;=&#39;grey40&#39;, &#39;republicans&#39;=&#39;black&#39;))
+gt &lt;- gt + geom_vline(xintercept = c(1961, 1981), lty = 2, lwd=1)
+gt &lt;- gt + ggtitle(&quot;Annual Sunspot Count and Number of Senate Republicans&quot;)
+gt &lt;- gt + xlab(&quot;Year&quot;) + ylab(&quot;normalized \n series&quot;) + theme(legend.position=&quot;top&quot;)
+gt</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" /></p>
+<pre class="r"><code>gh &lt;- ggplot(sr.df2, aes(y = annual.sunspot.count, x = number.of.republicans.in.senate))
+gh &lt;- gh + geom_smooth(method=lm, se=FALSE, lwd=1) 
+gh &lt;- gh + geom_point() + ggtitle(paste(&quot;1960 - 1980,&quot;, &quot;ρ =&quot;, round(cor(sr.df2)[1, 2], 2)))
+gh &lt;- gh + ylab(&quot;annual sunspot count&quot;) + xlab(&quot;number of senate republicans&quot;)
+
+
+gg &lt;- ggplot(sr.df1, aes(y = annual.sunspot.count, x = number.of.republicans.in.senate))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=1) 
+gg &lt;- gg + geom_point() + ggtitle(paste(&quot;1900 - 2013,&quot;, &quot;ρ =&quot;, round(cor(sr.df1)[1, 2], 2)))
+gg &lt;- gg + ylab(&quot;annual sunspot count&quot;) + xlab(&quot;number of senate republicans&quot;)
+
+grid.arrange(gg, gh, ncol = 2)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-2.png" /></p>
+</div>
+</div>
+<div id="type-ii" class="section level1">
+<h1>Type II</h1>
+<p>When <strong>derived variables share a common <em>intrinsic</em> variable, their correlation structure will exhibit Type II spurious (un)correlation</strong>. Such convincingly strong or weak correlations are easily misleading if the relationship is ignored or hidden.</p>
+<div id="example-i---spurious-correlation" class="section level2">
+<h2>Example I - Spurious Correlation</h2>
+<p><strong>BMI and ‘Relative Weight’</strong> <br> Consider (Gray and Fujioka, 1991) where the authors found a strong relationship between BMI and ‘Relative Weight’. They concluded:</p>
+<blockquote>
+<p>“There was such a close correlation between the relative weights calculated using MLI Tables ‘desireable weights’ as standards and the BMI (<span class="math">\(R^2\)</span> ranging from 0.992 to 0.999) that they appear to be measuring the same thing.” <em>[p. 548]</em></p>
+</blockquote>
+<p>As it turns out, BMI and Relative Weight were indeed <em>measuring the same thing.</em> According to the definitions in the article:</p>
+<p>    <span class="math">\(BMI=\frac{Weight}{Height^{2}}\)</span> <br><br>     <span class="math">\(Relative\,Weight=\frac{Weight}{Desireable\, Weight}\)</span> <br><br>     and so the spurious correlation is of the form <span class="math">\(\frac{X}{f(Y)}\)</span> vs. <span class="math">\(\frac{X}{g(Y)}\)</span>.</p>
+<p>The so-called ‘Desirable Weight’ is a function of height and is derived from tables published by Met-Life Insurance Company in 1983, and reproduced below.</p>
+<div id="data-from-the-wild" class="section level3">
+<h3>Data from the Wild</h3>
+<p>The data set used by Gray and Fujioka was not available. Instead, data sets of the heights and weights of Major League Baseball players and Miss America Pageant winners are used to demonstrate the <em>spurious correlation</em> of Relative Weight and BMI.</p>
+<pre class="r"><code>Women &lt;- read.csv(&#39;data/Women.csv&#39;)
+Men &lt;- read.csv(&#39;data/Men.csv&#39;)
+colnames(Women) &lt;- c(&#39;Height (in.)&#39;, &#39;Des. Wt. (lbs.)&#39;)
+colnames(Men) &lt;- c(&#39;Height (in.)&#39;, &#39;Des. Wt. (lbs.)&#39;)
+
+MLB &lt;-  read.csv(&#39;data/MLB.csv&#39;)
+MissAmerica &lt;- read.csv(&#39;data/MissAmerica.csv&#39;)
+colnames(MLB) &lt;- c(&#39;Height (in)&#39;, &#39;Height (m)&#39;, &#39;Weight (lbs)&#39;, &#39;Weight (kg)&#39;, &#39;Desirable Weight (lbs)&#39;, &#39;Relative Weight (%)&#39;, &#39;BMI (kg/m2)&#39;)
+colnames(MissAmerica) &lt;- c(&#39;Height (in)&#39;, &#39;Height (m)&#39;, &#39;Weight (lbs)&#39;, &#39;Weight (kg)&#39;, &#39;Desirable Weight (lbs)&#39;, &#39;Relative Weight (%)&#39;, &#39;BMI (kg/m2)&#39;)</code></pre>
+<pre class="r"><code>MLB.df &lt;- data.frame(MLB[,6:7])
+colnames(MLB.df) &lt;- c(&quot;Relative Weight (%)&quot;, &quot;BMI (kg/m^{2})&quot;)
+gg &lt;- ggplot(MLB.df, aes(y = `Relative Weight (%)`, x = `BMI (kg/m^{2})`))
+gg &lt;- gg + xlab(expression(BMI (kg/m^{2})))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=2) 
+gg &lt;- gg + geom_point() + ggtitle(
+  paste(&quot;Relative Weight vs. Body Mass Index \n for Major Leage Baseball Players, ρ =&quot;, 
+        round(cor(MLB.df)[1, 2], 2)))
+gg</code></pre>
+<p><img src="index_files/figure-html/fig1-1.png" /></p>
+<pre class="r"><code>MAM.df &lt;- data.frame(MissAmerica[,6:7])
+colnames(MAM.df) &lt;- c(&quot;Relative Weight (%)&quot;, &quot;BMI ($kg/m^{2}$)&quot;)
+gg &lt;- ggplot(MAM.df, aes(y = `Relative Weight (%)`, x = `BMI ($kg/m^{2}$)`))
+gg &lt;- gg + xlab(expression(BMI (kg/m^{2})))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=2) 
+gg &lt;- gg + geom_point() + ggtitle(
+  paste(&quot;Relative Weight vs. Body Mass Index \n for Miss America Pageant Winners, ρ =&quot;, 
+        round(cor(MAM.df)[1, 2], 2)) )
+gg</code></pre>
+<p><img src="index_files/figure-html/fig2-1.png" /></p>
+</div>
+<div id="random-data" class="section level3">
+<h3>Random Data</h3>
+<p>Random height and weight data can also be generated to demonstrate the general consequence of the measuring the correlation between derived variables of the form <span class="math">\(\frac{X}{f(Y)}\)</span> vs. <span class="math">\(\frac{X}{g(Y)}\)</span>.</p>
+<pre class="r"><code>set.seed(7)
+ht &lt;- floor(runif(n = 1000, min = min(Men[,1]), max = max(Men[,1])))
+wt &lt;- 95 + rlnorm(1000, 0, 1.4)
+
+desiredWeight &lt;- function(ht){ Men[which(Men[,1] == ht), 2]}
+
+dwt &lt;- unlist(lapply(ht, desiredWeight))
+
+bmi &lt;- wt / (ht^2) 
+rwt &lt;- wt / dwt * 100</code></pre>
+<pre class="r"><code>rnd.df &lt;- data.frame(ht = ht, wt = wt)
+
+gg &lt;- ggplot(rnd.df, aes(y = wt, x = ht)) + geom_point()
+gg &lt;- gg + ggtitle(paste(&quot;Randomly Generated Weights and Heights, &quot;, 
+                         &quot;ρ&quot;, &quot;=&quot;, round(cor(rnd.df)[1, 2], 2)))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=1)
+gg &lt;- gg + xlab(&quot;Height, in.&quot;) + ylab(&quot;Weight, lbs. &quot;)
+gg</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" /></p>
+<p>The plot above demonstrates that our random Heights and Weights are not correlated. <br></p>
+<p>Nevertheless spurious correlation arises when we plot <span class="math">\(\frac{Weight}{f(Height)}\)</span> against <span class="math">\(\frac{Weight}{g(Height)}\)</span>.</p>
+<pre class="r"><code>rnd.df &lt;- data.frame(rwt = rwt, bmi = bmi)
+gg &lt;- ggplot(rnd.df, aes(y = rwt, x = bmi))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=2) 
+gg &lt;- gg + geom_point() + ggtitle(
+  paste(&quot;Relative Weight vs. Body Mass Index for Random Data, ρ =&quot;, 
+        round(cor(rwt, bmi), 2))
+  )
+gg &lt;- gg + xlab(expression(BMI~lbs/inch^{2})) + ylab(&quot;Relative Weight (%)&quot;)
+gg</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" /></p>
+</div>
+</div>
+<div id="example-ii---spurious-uncorrelation" class="section level2">
+<h2>Example II - Spurious Uncorrelation</h2>
+<p><strong>BMI vs. Height in MLB</strong> <br> Now let us examine the relationship between the BMI and height of major league baseball players. Again,</p>
+<p>    <span class="math">\(BMI=\frac{Weight}{Height^{2}}\)</span> and so the spurious uncorrelation is of the form: <br><br>     <span class="math">\(\frac{X}{f(Y)}\)</span> vs. <span class="math">\(Y\)</span>.</p>
+<pre class="r"><code>MLB.df$Height &lt;- MLB[,1]
+
+colnames(MLB.df) &lt;- c(&quot;Relative Weight (%)&quot;, &quot;BMI (kg/m^{2})&quot;, &quot;Height (in.)&quot;)
+gg &lt;- ggplot(MLB.df, aes(y = `BMI (kg/m^{2})`, x = `Height (in.)`))
+gg &lt;- gg + ylab(expression(BMI (kg/m^{2})))
+gg &lt;- gg + geom_smooth(method=lm, se=FALSE, lwd=2) 
+gg &lt;- gg + geom_point() + ggtitle(
+  paste(&quot;Body Mass Index vs. Height \n for Major Leage Baseball Players, ρ =&quot;, 
+        round(cor(MLB.df)[2, 3], 2)))
+gg</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" /></p>
+<div id="reflection-questions" class="section level3">
+<h3>Reflection Questions</h3>
+<ul>
+<li>Would you defend the conclusion that there is no relationship between BMI and Height?</li>
+<li>How could the query be better framed?
+<ul>
+<li>Consider: <em>do we really care about BMI in itself or as an indicator?</em></li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<blockquote>
+<p>Gray, David S., and Ken Fujioka. 1991. “Use of Relative Weight and Body Mass Index for the Determination of Adiposity.” <em>Journal of Clinical Epidemiology</em> 44 (6). Elsevier BV: 545–50. doi: <a href="http://dx.doi.org/10.1016/0895-4356(91)90218-x}{}">10.1016/0895-4356(91)90218-x</a>.</p>
+</blockquote>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="desireable-weight-tables" class="section level2">
+<h2>Desireable Weight Tables</h2>
+<p>Met-Life Insurance Company, published in 1983</p>
+<div id="men" class="section level3">
+<h3>Men</h3>
+<pre class="r"><code>pander(Men)</code></pre>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Height (in.)</th>
+<th align="center">Des. Wt. (lbs.)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">62</td>
+<td align="center">136</td>
+</tr>
+<tr class="even">
+<td align="center">63</td>
+<td align="center">138</td>
+</tr>
+<tr class="odd">
+<td align="center">64</td>
+<td align="center">140</td>
+</tr>
+<tr class="even">
+<td align="center">65</td>
+<td align="center">142.5</td>
+</tr>
+<tr class="odd">
+<td align="center">66</td>
+<td align="center">145</td>
+</tr>
+<tr class="even">
+<td align="center">67</td>
+<td align="center">148</td>
+</tr>
+<tr class="odd">
+<td align="center">68</td>
+<td align="center">151</td>
+</tr>
+<tr class="even">
+<td align="center">69</td>
+<td align="center">154</td>
+</tr>
+<tr class="odd">
+<td align="center">70</td>
+<td align="center">157</td>
+</tr>
+<tr class="even">
+<td align="center">71</td>
+<td align="center">160</td>
+</tr>
+<tr class="odd">
+<td align="center">72</td>
+<td align="center">163.5</td>
+</tr>
+<tr class="even">
+<td align="center">73</td>
+<td align="center">167</td>
+</tr>
+<tr class="odd">
+<td align="center">74</td>
+<td align="center">171</td>
+</tr>
+<tr class="even">
+<td align="center">75</td>
+<td align="center">174.5</td>
+</tr>
+<tr class="odd">
+<td align="center">76</td>
+<td align="center">179</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="women" class="section level3">
+<h3>Women</h3>
+<pre class="r"><code>pander(Women)</code></pre>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Height (in.)</th>
+<th align="center">Des. Wt. (lbs.)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">58</td>
+<td align="center">115</td>
+</tr>
+<tr class="even">
+<td align="center">59</td>
+<td align="center">117</td>
+</tr>
+<tr class="odd">
+<td align="center">60</td>
+<td align="center">119.5</td>
+</tr>
+<tr class="even">
+<td align="center">61</td>
+<td align="center">122</td>
+</tr>
+<tr class="odd">
+<td align="center">62</td>
+<td align="center">125</td>
+</tr>
+<tr class="even">
+<td align="center">63</td>
+<td align="center">128</td>
+</tr>
+<tr class="odd">
+<td align="center">64</td>
+<td align="center">131</td>
+</tr>
+<tr class="even">
+<td align="center">65</td>
+<td align="center">134</td>
+</tr>
+<tr class="odd">
+<td align="center">66</td>
+<td align="center">137</td>
+</tr>
+<tr class="even">
+<td align="center">67</td>
+<td align="center">140</td>
+</tr>
+<tr class="odd">
+<td align="center">68</td>
+<td align="center">143</td>
+</tr>
+<tr class="even">
+<td align="center">69</td>
+<td align="center">146</td>
+</tr>
+<tr class="odd">
+<td align="center">70</td>
+<td align="center">149</td>
+</tr>
+<tr class="even">
+<td align="center">71</td>
+<td align="center">152</td>
+</tr>
+<tr class="odd">
+<td align="center">72</td>
+<td align="center">155</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="mlb-and-miss-america" class="section level2">
+<h2>MLB and Miss America</h2>
+<div id="miss-america-pageant-winners" class="section level3">
+<h3>Miss America Pageant Winners</h3>
+<p>First 25 Miss America Pageant Winners in Data Set</p>
+<pre class="r"><code>pander(head(MissAmerica, 25))</code></pre>
+<table>
+<colgroup>
+<col width="12%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="21%" />
+<col width="18%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Height (in)</th>
+<th align="center">Height (m)</th>
+<th align="center">Weight (lbs)</th>
+<th align="center">Weight (kg)</th>
+<th align="center">Desirable Weight (lbs)</th>
+<th align="center">Relative Weight (%)</th>
+<th align="center">BMI (kg/m2)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">61</td>
+<td align="center">1.55</td>
+<td align="center">108</td>
+<td align="center">49</td>
+<td align="center">122</td>
+<td align="center">88.52</td>
+<td align="center">20.4</td>
+</tr>
+<tr class="even">
+<td align="center">67</td>
+<td align="center">1.7</td>
+<td align="center">140</td>
+<td align="center">63.5</td>
+<td align="center">140</td>
+<td align="center">100</td>
+<td align="center">21.9</td>
+</tr>
+<tr class="odd">
+<td align="center">66</td>
+<td align="center">1.68</td>
+<td align="center">137</td>
+<td align="center">62.1</td>
+<td align="center">137</td>
+<td align="center">100</td>
+<td align="center">22.1</td>
+</tr>
+<tr class="even">
+<td align="center">66</td>
+<td align="center">1.68</td>
+<td align="center">138</td>
+<td align="center">62.6</td>
+<td align="center">137</td>
+<td align="center">100.7</td>
+<td align="center">22.3</td>
+</tr>
+<tr class="odd">
+<td align="center">64</td>
+<td align="center">1.63</td>
+<td align="center">118</td>
+<td align="center">53.5</td>
+<td align="center">131</td>
+<td align="center">90.08</td>
+<td align="center">20.3</td>
+</tr>
+<tr class="even">
+<td align="center">65.5</td>
+<td align="center">1.66</td>
+<td align="center">115</td>
+<td align="center">52.2</td>
+<td align="center">134</td>
+<td align="center">85.82</td>
+<td align="center">18.8</td>
+</tr>
+<tr class="odd">
+<td align="center">64.5</td>
+<td align="center">1.64</td>
+<td align="center">112</td>
+<td align="center">50.8</td>
+<td align="center">131</td>
+<td align="center">85.5</td>
+<td align="center">18.9</td>
+</tr>
+<tr class="even">
+<td align="center">66</td>
+<td align="center">1.68</td>
+<td align="center">120</td>
+<td align="center">54.4</td>
+<td align="center">137</td>
+<td align="center">87.59</td>
+<td align="center">19.4</td>
+</tr>
+<tr class="odd">
+<td align="center">66</td>
+<td align="center">1.68</td>
+<td align="center">114</td>
+<td align="center">51.7</td>
+<td align="center">137</td>
+<td align="center">83.21</td>
+<td align="center">18.4</td>
+</tr>
+<tr class="even">
+<td align="center">66.5</td>
+<td align="center">1.69</td>
+<td align="center">120</td>
+<td align="center">54.4</td>
+<td align="center">137</td>
+<td align="center">87.59</td>
+<td align="center">19.1</td>
+</tr>
+<tr class="odd">
+<td align="center">67</td>
+<td align="center">1.7</td>
+<td align="center">128</td>
+<td align="center">58.1</td>
+<td align="center">140</td>
+<td align="center">91.43</td>
+<td align="center">20</td>
+</tr>
+<tr class="even">
+<td align="center">67</td>
+<td align="center">1.7</td>
+<td align="center">126</td>
+<td align="center">57.2</td>
+<td align="center">140</td>
+<td align="center">90</td>
+<td align="center">19.7</td>
+</tr>
+<tr class="odd">
+<td align="center">69</td>
+<td align="center">1.75</td>
+<td align="center">120</td>
+<td align="center">54.4</td>
+<td align="center">146</td>
+<td align="center">82.19</td>
+<td align="center">17.7</td>
+</tr>
+<tr class="even">
+<td align="center">65.5</td>
+<td align="center">1.66</td>
+<td align="center">120</td>
+<td align="center">54.4</td>
+<td align="center">134</td>
+<td align="center">89.55</td>
+<td align="center">19.7</td>
+</tr>
+<tr class="odd">
+<td align="center">65</td>
+<td align="center">1.65</td>
+<td align="center">118</td>
+<td align="center">53.5</td>
+<td align="center">134</td>
+<td align="center">88.06</td>
+<td align="center">19.6</td>
+</tr>
+<tr class="even">
+<td align="center">68</td>
+<td align="center">1.73</td>
+<td align="center">130</td>
+<td align="center">59</td>
+<td align="center">143</td>
+<td align="center">90.91</td>
+<td align="center">19.8</td>
+</tr>
+<tr class="odd">
+<td align="center">67</td>
+<td align="center">1.7</td>
+<td align="center">125</td>
+<td align="center">56.7</td>
+<td align="center">140</td>
+<td align="center">89.29</td>
+<td align="center">19.6</td>
+</tr>
+<tr class="even">
+<td align="center">70</td>
+<td align="center">1.78</td>
+<td align="center">135</td>
+<td align="center">61.2</td>
+<td align="center">149</td>
+<td align="center">90.6</td>
+<td align="center">19.4</td>
+</tr>
+<tr class="odd">
+<td align="center">68</td>
+<td align="center">1.73</td>
+<td align="center">123</td>
+<td align="center">55.8</td>
+<td align="center">143</td>
+<td align="center">86.01</td>
+<td align="center">18.7</td>
+</tr>
+<tr class="even">
+<td align="center">67</td>
+<td align="center">1.7</td>
+<td align="center">130</td>
+<td align="center">59</td>
+<td align="center">140</td>
+<td align="center">92.86</td>
+<td align="center">20.4</td>
+</tr>
+<tr class="odd">
+<td align="center">69</td>
+<td align="center">1.75</td>
+<td align="center">140</td>
+<td align="center">63.5</td>
+<td align="center">146</td>
+<td align="center">95.89</td>
+<td align="center">20.7</td>
+</tr>
+<tr class="even">
+<td align="center">63</td>
+<td align="center">1.6</td>
+<td align="center">106</td>
+<td align="center">48.1</td>
+<td align="center">128</td>
+<td align="center">82.81</td>
+<td align="center">18.8</td>
+</tr>
+<tr class="odd">
+<td align="center">65.5</td>
+<td align="center">1.66</td>
+<td align="center">119</td>
+<td align="center">54</td>
+<td align="center">134</td>
+<td align="center">88.81</td>
+<td align="center">19.5</td>
+</tr>
+<tr class="even">
+<td align="center">70</td>
+<td align="center">1.78</td>
+<td align="center">143</td>
+<td align="center">64.9</td>
+<td align="center">149</td>
+<td align="center">95.97</td>
+<td align="center">20.5</td>
+</tr>
+<tr class="odd">
+<td align="center">66.3</td>
+<td align="center">1.68</td>
+<td align="center">118</td>
+<td align="center">53.5</td>
+<td align="center">137</td>
+<td align="center">86.13</td>
+<td align="center">18.9</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="major-league-baseball" class="section level3">
+<h3>Major League Baseball</h3>
+<p>First 25 Major League Baseball Players in Data Set</p>
+<pre class="r"><code>pander(head(MLB, 25))</code></pre>
+<table>
+<colgroup>
+<col width="12%" />
+<col width="11%" />
+<col width="12%" />
+<col width="12%" />
+<col width="21%" />
+<col width="18%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Height (in)</th>
+<th align="center">Height (m)</th>
+<th align="center">Weight (lbs)</th>
+<th align="center">Weight (kg)</th>
+<th align="center">Desirable Weight (lbs)</th>
+<th align="center">Relative Weight (%)</th>
+<th align="center">BMI (kg/m2)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">74</td>
+<td align="center">1.88</td>
+<td align="center">180</td>
+<td align="center">81.65</td>
+<td align="center">171</td>
+<td align="center">105.3</td>
+<td align="center">23.11</td>
+</tr>
+<tr class="even">
+<td align="center">74</td>
+<td align="center">1.88</td>
+<td align="center">215</td>
+<td align="center">97.52</td>
+<td align="center">171</td>
+<td align="center">125.7</td>
+<td align="center">27.6</td>
+</tr>
+<tr class="odd">
+<td align="center">72</td>
+<td align="center">1.83</td>
+<td align="center">210</td>
+<td align="center">95.25</td>
+<td align="center">163.5</td>
+<td align="center">128.4</td>
+<td align="center">28.48</td>
+</tr>
+<tr class="even">
+<td align="center">72</td>
+<td align="center">1.83</td>
+<td align="center">210</td>
+<td align="center">95.25</td>
+<td align="center">163.5</td>
+<td align="center">128.4</td>
+<td align="center">28.48</td>
+</tr>
+<tr class="odd">
+<td align="center">73</td>
+<td align="center">1.85</td>
+<td align="center">188</td>
+<td align="center">85.28</td>
+<td align="center">167</td>
+<td align="center">112.6</td>
+<td align="center">24.8</td>
+</tr>
+<tr class="even">
+<td align="center">69</td>
+<td align="center">1.75</td>
+<td align="center">176</td>
+<td align="center">79.83</td>
+<td align="center">154</td>
+<td align="center">114.3</td>
+<td align="center">25.99</td>
+</tr>
+<tr class="odd">
+<td align="center">69</td>
+<td align="center">1.75</td>
+<td align="center">209</td>
+<td align="center">94.8</td>
+<td align="center">154</td>
+<td align="center">135.7</td>
+<td align="center">30.86</td>
+</tr>
+<tr class="even">
+<td align="center">71</td>
+<td align="center">1.8</td>
+<td align="center">200</td>
+<td align="center">90.72</td>
+<td align="center">160</td>
+<td align="center">125</td>
+<td align="center">27.89</td>
+</tr>
+<tr class="odd">
+<td align="center">76</td>
+<td align="center">1.93</td>
+<td align="center">231</td>
+<td align="center">104.8</td>
+<td align="center">179</td>
+<td align="center">129.1</td>
+<td align="center">28.12</td>
+</tr>
+<tr class="even">
+<td align="center">71</td>
+<td align="center">1.8</td>
+<td align="center">180</td>
+<td align="center">81.65</td>
+<td align="center">160</td>
+<td align="center">112.5</td>
+<td align="center">25.1</td>
+</tr>
+<tr class="odd">
+<td align="center">73</td>
+<td align="center">1.85</td>
+<td align="center">188</td>
+<td align="center">85.28</td>
+<td align="center">167</td>
+<td align="center">112.6</td>
+<td align="center">24.8</td>
+</tr>
+<tr class="even">
+<td align="center">73</td>
+<td align="center">1.85</td>
+<td align="center">180</td>
+<td align="center">81.65</td>
+<td align="center">167</td>
+<td align="center">107.8</td>
+<td align="center">23.75</td>
+</tr>
+<tr class="odd">
+<td align="center">74</td>
+<td align="center">1.88</td>
+<td align="center">185</td>
+<td align="center">83.91</td>
+<td align="center">171</td>
+<td align="center">108.2</td>
+<td align="center">23.75</td>
+</tr>
+<tr class="even">
+<td align="center">74</td>
+<td align="center">1.88</td>
+<td align="center">160</td>
+<td align="center">72.57</td>
+<td align="center">171</td>
+<td align="center">93.57</td>
+<td align="center">20.54</td>
+</tr>
+<tr class="odd">
+<td align="center">69</td>
+<td align="center">1.75</td>
+<td align="center">180</td>
+<td align="center">81.65</td>
+<td align="center">154</td>
+<td align="center">116.9</td>
+<td align="center">26.58</td>
+</tr>
+<tr class="even">
+<td align="center">70</td>
+<td align="center">1.78</td>
+<td align="center">185</td>
+<td align="center">83.91</td>
+<td align="center">157</td>
+<td align="center">117.8</td>
+<td align="center">26.54</td>
+</tr>
+<tr class="odd">
+<td align="center">72</td>
+<td align="center">1.83</td>
+<td align="center">197</td>
+<td align="center">89.36</td>
+<td align="center">163.5</td>
+<td align="center">120.5</td>
+<td align="center">26.72</td>
+</tr>
+<tr class="even">
+<td align="center">73</td>
+<td align="center">1.85</td>
+<td align="center">189</td>
+<td align="center">85.73</td>
+<td align="center">167</td>
+<td align="center">113.2</td>
+<td align="center">24.94</td>
+</tr>
+<tr class="odd">
+<td align="center">75</td>
+<td align="center">1.91</td>
+<td align="center">185</td>
+<td align="center">83.91</td>
+<td align="center">174.5</td>
+<td align="center">106</td>
+<td align="center">23.12</td>
+</tr>
+<tr class="even">
+<td align="center">78</td>
+<td align="center">1.98</td>
+<td align="center">219</td>
+<td align="center">99.34</td>
+<td align="center">179</td>
+<td align="center">122.3</td>
+<td align="center">25.31</td>
+</tr>
+<tr class="odd">
+<td align="center">79</td>
+<td align="center">2.01</td>
+<td align="center">230</td>
+<td align="center">104.3</td>
+<td align="center">179</td>
+<td align="center">128.5</td>
+<td align="center">25.91</td>
+</tr>
+<tr class="even">
+<td align="center">76</td>
+<td align="center">1.93</td>
+<td align="center">205</td>
+<td align="center">92.99</td>
+<td align="center">179</td>
+<td align="center">114.5</td>
+<td align="center">24.95</td>
+</tr>
+<tr class="odd">
+<td align="center">74</td>
+<td align="center">1.88</td>
+<td align="center">230</td>
+<td align="center">104.3</td>
+<td align="center">171</td>
+<td align="center">134.5</td>
+<td align="center">29.53</td>
+</tr>
+<tr class="even">
+<td align="center">76</td>
+<td align="center">1.93</td>
+<td align="center">195</td>
+<td align="center">88.45</td>
+<td align="center">179</td>
+<td align="center">108.9</td>
+<td align="center">23.74</td>
+</tr>
+<tr class="odd">
+<td align="center">72</td>
+<td align="center">1.83</td>
+<td align="center">180</td>
+<td align="center">81.65</td>
+<td align="center">163.5</td>
+<td align="center">110.1</td>
+<td align="center">24.41</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="reproducibility-information" class="section level2">
+<h2>Reproducibility Information</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<p>R version 3.1.2 (2014-10-31) Platform: x86_64-apple-darwin13.4.0 (64-bit)</p>
+<p>locale: [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</p>
+<p>attached base packages: [1] grid stats graphics grDevices utils datasets methods<br />[8] base</p>
+<p>other attached packages: [1] pander_0.5.1 gridExtra_0.9.1 xtable_1.7-4 ggplot2_1.0.0<br />[5] knitr_1.7.10</p>
+<p>loaded via a namespace (and not attached): [1] colorspace_1.2-4 digest_0.6.4 evaluate_0.5.5 formatR_1.0<br /> [5] gtable_0.1.2 htmltools_0.2.6 labeling_0.3 MASS_7.3-35<br /> [9] munsell_0.4.2 plyr_1.8.1 proto_0.3-10 Rcpp_0.11.3<br />[13] reshape2_1.4 rmarkdown_0.3.10 scales_0.2.4 stringr_0.6.2<br />[17] tools_3.1.2 yaml_2.1.13</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

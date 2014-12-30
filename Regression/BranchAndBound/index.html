@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Vignette: Branch and Bound</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Vignette: Branch and Bound</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#the-subsetting-problem">The Subsetting Problem</a><ul>
+<li><a href="#the-r2-ratchet">The <span class="math">\(R^2\)</span> Ratchet</a></li>
+<li><a href="#best-subsets">Best Subsets</a></li>
+<li><a href="#branch-and-bound">Branch and Bound</a></li>
+</ul></li>
+<li><a href="#step-wise-example">Step-wise Example</a><ul>
+<li><a href="#step-1">Step 1</a></li>
+<li><a href="#step-2">Step 2</a></li>
+<li><a href="#step-3">Step 3</a></li>
+<li><a href="#step-4">Step 4</a></li>
+<li><a href="#step-5">Step 5</a></li>
+</ul></li>
+<li><a href="#rss-criterion-perks-pitfalls">RSS Criterion: Perks &amp; Pitfalls</a><ul>
+<li><a href="#perks">Perks</a></li>
+<li><a href="#pitfalls">Pitfalls</a></li>
+<li><a href="#example-random-noise-models">Example: Random Noise Models</a></li>
+</ul></li>
+<li><a href="#appendix">Appendix</a><ul>
+<li><a href="#references">References</a></li>
+<li><a href="#reproducibility-information">Reproducibility Information</a></li>
+</ul></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<strong>Kevin M. Smith // Big Data Analytics // Fall 2014</strong>
+<hr>
+<pre class="r"><code>library(knitr)
+library(ggplot2)
+library(xtable)
+library(gridExtra)
+library(pander)
+
+opts_knit$set(fig.width = 10,
+              xtable.type = &#39;html&#39;,
+              warning = FALSE,
+              cache = TRUE,
+              dev = &#39;png&#39;)
+
+
+options(xtable.comment = FALSE)
+panderOptions(&#39;table.split.table&#39;, Inf)</code></pre>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+The purpose of this short note is to introduce the <strong>branch and bound</strong> method for <strong>exhaustive subsetting of predictor variables in multivariate linear regression</strong>. Those familiar with integer programming may also be familiar with branch and bound techniques, as they are widely used. This note will not explore low-level algorithmic details (which vary widely) but instead convey the basic theory and general results of the application of branch and bound techniques. <br><br>
+<hr>
+</div>
+<div id="the-subsetting-problem" class="section level1">
+<h1>The Subsetting Problem</h1>
+<div id="the-r2-ratchet" class="section level2">
+<h2>The <span class="math">\(R^2\)</span> Ratchet</h2>
+<p>Here we are concerned with estimating the mean of the vector <span class="math">\(y = X\beta + \epsilon\)</span> where <span class="math">\(X\)</span> is a <span class="math">\(n\)</span> by <span class="math">\(p\)</span> design matrix. In general, increasing <span class="math">\(p\)</span> (the number of predictors) relative to <span class="math">\(n\)</span> (the number of observations) will reduce the residual sum of square errors, <span class="math">\(RSS = \sum_i^n (y_i - \hat{y})\)</span> and increase the coefficient of determination <span class="math">\(R^2\)</span>. In fact, <strong>RSS will never increase</strong> and <strong>the <span class="math">\(R^2\)</span> never decrease</strong> with an additional predictor <span class="math">\(X_{p+1}\)</span>, regardless of whether or not the new predictor <span class="math">\(X_{p+1}\)</span> is a causal driver of <span class="math">\(y\)</span> or just random noise. <a href="http://kevin-m-smith.github.io/CEE202/Regression/TheRatchet/">See the <em>Vignette</em> on the <span class="math">\(R^2\)</span> ratchet for more details.</a></p>
+</div>
+<div id="best-subsets" class="section level2">
+<h2>Best Subsets</h2>
+<p>One method to account for the effects of the number of predictors (<span class="math">\(p\)</span>) on the in-set predictive capability is simply to enumerate the <span class="math">\(k\)</span> best models for each subset of <span class="math">\(d\)</span> predictors where <span class="math">\(d \le p\)</span> so the trade-offs can be assessed directly. However, as the number of models to evaluate grows quickly with <span class="math">\(p\)</span>, the upper bound on <span class="math">\(d\)</span>. Specifically, at each level <span class="math">\(d\)</span> there are <span class="math">\(\tbinom pd\)</span> models. <br><br> Consider the case where <span class="math">\(p = 12\)</span>, and the objective is to solve for the best model at each level <span class="math">\(d \in 1...P\)</span> A brute force search would require evaluating all <span class="math">\(\sum_{i=1}^{12} \tbinom {12}{i} = 4095\)</span> models. With modern computers, this is feasible in a reasonable time frame. However, if <span class="math">\(p\)</span> is increased by 50% to 18 predictors, the total number of models becomes <span class="math">\(\sum_{i=1}^{18} \tbinom {18}{i} = 2.62143\times 10^{5}\)</span>. Clearly things get out of hand pretty quickly.</p>
+<pre class="r"><code>library(ggplot2)
+#p == 5
+p3 &lt;- rep(&quot;3&quot;, 9)
+x3 &lt;- c(1:3, rep(NA, 6))
+y3 &lt;- c(choose(3, x3))
+
+#p == 5
+p5 &lt;- rep(&quot;5&quot;, 9)
+x5 &lt;- c(1:5, NA, NA, NA, NA)
+y5 &lt;- c(choose(5, x5))
+
+#p == 7
+p7 &lt;- rep(&quot;7&quot;, 9)
+x7 &lt;- c(1:7, NA, NA)
+y7 &lt;- c(choose(7, x7))
+
+# p == 9
+p9 &lt;- rep(&quot;9&quot;, 9)
+x9 &lt;- 1:9
+y9 &lt;- choose(9, x9)
+
+
+df &lt;- data.frame(x = c(x3, x5, x7, x9), 
+                 y = c(y3, y5, y7, y9), 
+                 p = c(p3, p5, p7, p9))
+
+p &lt;- ggplot(df, aes(x = x, y = y, color = p)) + 
+  geom_line(lwd = 2) + scale_y_log10() + 
+  scale_x_continuous(breaks = round(seq(1, 9, by = 1),0)) + 
+  ggtitle(&quot;Number of Models to Evaluate at Each Subset Level (d) as a Function of Number of Predictors (p).&quot;) + 
+  ylab(&quot;Number of Models to Evaluate&quot;) +
+  xlab(&quot;Subset Level (d)&quot;)
+
+p</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" /></p>
+</div>
+<div id="branch-and-bound" class="section level2">
+<h2>Branch and Bound</h2>
+In 1974 <strong>Furnival and Wilson</strong> first applied <strong>branch and bound</strong> methods to subset selection. The key to applying branch and bound methods was the identification of an criterion function that guaranteed that for every super-set-subset relationship <span class="math">\(S_a \supset S_b\)</span>, the value of the criteria function <span class="math">\(J(a) \le J(b)\)</span>. In this way, an optimal solution can be found without evaluating all possible models. The ratcheting effect of the residual sum of squared errors (RSS) makes it an excellent candidate for the criteria function. With the addition of a predictor <span class="math">\(X_{p+1}\)</span> to set <span class="math">\(S_p\)</span>, it follows that <span class="math">\(RSS(S_{p+1}) \le RSS(S_{p})\)</span> <br><br> By using the criteria function, the branch and bound algorithm can often eliminate vast swaths of models that are known to have sub-optimal solutions. The branch and bound method uses a <a href="http://en.wikipedia.org/wiki/Tree_(set_theory)">tree</a> where the top node is the model with all the predictors, i.e. <span class="math">\(d = p\)</span>. From that node, each combination of <span class="math">\(d = (p-1)\)</span> is branched recursively until the leaf nodes are at the desired minimum level of sub-setting. For each sub-level <span class="math">\(d\)</span> the minimum value of RSS is recorded as the <strong>lower bound</strong>. For a given node <span class="math">\(a\)</span> with branches <span class="math">\(b1\)</span> and <span class="math">\(b2\)</span> the sub-setting is <span class="math">\(S_a \supset S_{b1} \supset S_{c1}\)</span> and <span class="math">\(S_a \supset S_{b2} \supset S_{c2}\)</span>. If the algorithm evaluates <span class="math">\(\S_{c1}\)</span> at level <span class="math">\(d\)</span> and finds it has a lower RSS than <span class="math">\(\S_{b2}\)</span> at level <span class="math">\(d+1\)</span>, it follows immediately that <span class="math">\(RSS(S_{c1}) \lt RSS(S_{b2} \lt S_{c2})\)</span>. Therefore none of the children of <span class="math">\(S_{b2}\)</span> need to be evaluated as candidates for the best models in subset <span class="math">\(d\)</span> - they can simply be dropped. Diagrams can be infinitely more useful in understanding this process - so a worked example follows. <br><br>
+<hr>
+</div>
+</div>
+<div id="step-wise-example" class="section level1">
+<h1>Step-wise Example</h1>
+<ul>
+<li>In this example there are 5 predictors, i.e. <span class="math">\(p = 5\)</span>. The predictors are labeled A, B, C, D, E.</li>
+<li>For simplicity, assume only the single (<span class="math">\(k = 1\)</span>) best subset at level <span class="math">\(d = 2\)</span> is desired.
+<ul>
+<li><em>As a consequence the algorithm is only keeping track of the lower bound on RSS for level <span class="math">\(d = 2\)</span></em>.</li>
+</ul></li>
+<li>The <strong>‘!’</strong> in front of a letter indicates the predictor with that letter is <strong>NOT</strong> in the subtree.</li>
+<li>No particular heuristics are used here - the algorithm is naive.</li>
+<li>This example only shows a possible first sweep of the tree, which would continue repetitively until the optimal solution is found.</li>
+</ul>
+<div id="step-1" class="section level2">
+<h2>Step 1</h2>
+<p><img src="images/bb1.svg" alt="Step 1" /></p>
+</div>
+<div id="step-2" class="section level2">
+<h2>Step 2</h2>
+<p><img src="images/bb2.svg" alt="Step 2" /></p>
+</div>
+<div id="step-3" class="section level2">
+<h2>Step 3</h2>
+<p><img src="images/bb3.svg" alt="Step 3" /></p>
+</div>
+<div id="step-4" class="section level2">
+<h2>Step 4</h2>
+<p><img src="images/bb4.svg" alt="Step 4" /></p>
+</div>
+<div id="step-5" class="section level2">
+<h2>Step 5</h2>
+<p><img src="images/bb5.svg" alt="Step 5" /></p>
+<p><strong>Here by evaluating <em>two</em> models, we have eliminated <em>three</em>. In this case it is a small victory, but the results can be much more dramatic as <span class="math">\(p\)</span> grows large</strong>.</p>
+<hr>
+<p><br></p>
+</div>
+</div>
+<div id="rss-criterion-perks-pitfalls" class="section level1">
+<h1>RSS Criterion: Perks &amp; Pitfalls</h1>
+<div id="perks" class="section level2">
+<h2>Perks</h2>
+<p>While the effect of linear regression is to find parameters that minimize the RSS, the actual value of the RSS is not informative in the absence of other context. Generally, statistics such as <span class="math">\(R^2\)</span> the adjusted <span class="math">\(R^2\)</span> are used to provide a more stand-alone description of the model performance. Fortunately, the <span class="math">\(R^2\)</span> and the adjusted <span class="math">\(R^2\)</span> are both monotonic functions of RSS within a given sub-level of the predictor space <span class="math">\(d\)</span>. This follows directly from their definitions: <span class="math">\(R^2 = 1 - \frac{RSS}{\sum_i^n(y_i - \bar{y})^2}\)</span> and the adjusted <span class="math">\(R^2\)</span>, <span class="math">\(\bar{R}^2 \equiv 1 - (1 - R^2)\frac{n-1}{n-p-1}\)</span>. As a consequence, minimizing the RSS at a given <span class="math">\(d\)</span> is equivalent to maximizing <span class="math">\(R^2\)</span> and the adjusted <span class="math">\(R^2\)</span> at that level (see <strong>Funival and Wilson</strong>, page 499).</p>
+</div>
+<div id="pitfalls" class="section level2">
+<h2>Pitfalls</h2>
+<p>There is a push to move away from measures that rely on the residual sum of squared errors (RSS), since it doesn’t provide a measure of the out-sample predictive capacity. Specifically, it may often be more to care more about the the <span class="math">\(R_{pred}^2\)</span> <a href="http://kevin-m-smith.github.io/CEE202/Regression/TheRatchet/">(discussed in detail here)</a> than the <span class="math">\(\bar{R}^2\)</span> for example. Instead of RSS, <span class="math">\(R_{pred}^2\)</span> is a monotonic function of PRESS. However, PRESS does not serve well as a criteria function because it makes no guarantee that the addition of a predictor <span class="math">\(X_{p+1}\)</span> to set <span class="math">\(S_p\)</span> will result in <span class="math">\(PRESS(S_{p+1}) \le PRESS(S_{p})\)</span>. <br> <strong>As it turns out, the often vexing ratcheting effect of RSS is what makes it useful in this instance</strong>. As a result, there is currently no computationally efficient means of exhaustively evaluating models on the basis of PRESS.</p>
+</div>
+<div id="example-random-noise-models" class="section level2">
+<h2>Example: Random Noise Models</h2>
+<p>For this experiment all of the observations and the predictors are independent uniformly distributed random variables, <span class="math">\(\mathbb{R} \in [1, 5]\)</span>, <span class="math">\(x \sim U(1, 5)\)</span>.</p>
+<pre class="r"><code>require(leaps)
+
+set.seed(100)
+
+
+calculate.stats &lt;- function(z, y, x){
+  np &lt;- sum(z)
+  x &lt;- as.matrix(x[,which(z)])
+  fit &lt;- lm(y~x)
+  PRESS &lt;- sum( (resid(fit)/(1-hatvalues(fit)))^2 )
+  Sqs &lt;- anova(fit)$`Sum Sq`
+  PR2 &lt;- 1 - (PRESS / sum(Sqs))
+  t(c(np, PR2, Sqs[2], summary(fit)$r.squared, summary(fit)$adj.r.squared, PRESS))
+}
+
+experiment &lt;- function(){
+  y &lt;- runif(100)
+  
+  x &lt;- data.frame(x0 = runif(100),
+                  x1 = runif(100),
+                  x2 = runif(100),
+                  x3 = runif(100),
+                  x4 = runif(100),
+                  x5 = runif(100),
+                  x6 = runif(100),
+                  x7 = runif(100),
+                  x8 = runif(100),
+                  x9 = runif(100),
+                  xA = runif(100),
+                  xB = runif(100),
+                  xC = runif(100))
+  
+  t &lt;- regsubsets(x = x, y = y, nbest = 1716, nvmax = 13, really.big = T)
+  
+  whc &lt;- summary(t, matrix.logical = TRUE)$outmat
+  
+  result &lt;- apply(whc, 1, calculate.stats, y, x)  
+}
+
+a &lt;- t(experiment())      # Run Experiment
+a &lt;- data.frame(np = a[,1], pred.r2 = a[,2], # Restructure Results
+                RSS = a[,3], r2 = a[,4], adj.r2 = a[,5], PRESS = a[,6])</code></pre>
+<pre class="r"><code>g &lt;- ggplot(a, aes(x = RSS, y = r2, color = as.factor(np))) + 
+  geom_point() + ylab(&quot;R-squared&quot;) +
+  ggtitle(&quot;R-squared is a Monotone Function of RSS&quot;) + 
+  scale_color_discrete(name = &quot;Number of Random Noise Predictors&quot;) +
+  theme(legend.position = &quot;bottom&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" /></p>
+<blockquote>
+<p>The plot above demonstrates the ratcheting effect of RSS when adding an additional predictor, even if it is pure noise. It also shows the monotonicity of <span class="math">\(R^2\)</span> with RSS.</p>
+</blockquote>
+<pre class="r"><code>g &lt;- ggplot(a, aes(x = RSS, y = adj.r2, color = as.factor(np))) + 
+  geom_point() + ylab(&quot;Adjusted R-squared&quot;) +
+  ggtitle(&quot;Adjusted R-squared is a Monotone Function of RSS \n with Bandgaps Between Parameterization Levels&quot;) + 
+  scale_color_discrete(name = &quot;Number of Random Noise Predictors&quot;) +
+  theme(legend.position = &quot;bottom&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" /></p>
+<blockquote>
+<p>The above plot shows the penalization on <span class="math">\(\bar{R}^2\)</span> of adding an additional predictor <span class="math">\(x_{p+1}\)</span> as a rigid bandgap. It also clearly shows the monotonicity of <span class="math">\(\bar{R}^2\)</span> with RSS.</p>
+</blockquote>
+<pre class="r"><code>g &lt;- ggplot(a, aes(x = RSS, y = pred.r2, color = as.factor(np))) + 
+  geom_point() + ylab(&quot;Prediction R-squared&quot;) +
+  ggtitle(&quot;Prediction R-squared is NOT Monotone Function of RSS \n but it has (Noisey) Bandgaps Between Parameterization Levels&quot;) + 
+  scale_color_discrete(name = &quot;Number of Random Noise Predictors&quot;) +
+  theme(legend.position = &quot;bottom&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" /></p>
+<blockquote>
+<p>The plot above also shows bandgap features as a function of the number of predictors, but they are not clean breaks as they are with <span class="math">\(\bar{R}^2\)</span>. The plot also demonstrates that <span class="math">\(R_{pred}^2\)</span> is <em>NOT</em> a monotonic function of RSS, but of PRESS. Recall that <span class="math">\(R_{pred}^2\)</span> is a function of <a href="http://en.wikipedia.org/wiki/PRESS_statistic">PRESS</a>. The monotonicity of <span class="math">\(R_{pred}^2\)</span> with PRESS and the relationship PRESS and RSS are shown in the following plots.</p>
+</blockquote>
+<pre class="r"><code>g &lt;- ggplot(a, aes(x = PRESS, y = pred.r2, color = as.factor(np))) + 
+  geom_point() + ylab(&quot;Prediction R-squared&quot;) +
+  ggtitle(&quot;Prediction R-squared is a Monotone Function of PRESS \n  with Bandgaps Between Parameterization Levels&quot;) + 
+  scale_color_discrete(name = &quot;Number of Random Noise Predictors&quot;) +
+  theme(legend.position = &quot;bottom&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" /></p>
+<pre class="r"><code>g &lt;- ggplot(a, aes(x = RSS, y = PRESS, color = as.factor(np))) + 
+  geom_point() + 
+  ggtitle(&quot;PRESS vs. RSS&quot;) + 
+  scale_color_discrete(name = &quot;Number of Random Noise Predictors&quot;) +
+  theme(legend.position = &quot;bottom&quot;)
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" /></p>
+</div>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>G. M. Furnival and R. W. Wilson, “Regressions by Leaps and Bounds,” Technometrics, vol. 16, no. 4, pp. 499–511, Nov. 1974.</p>
+</div>
+<div id="reproducibility-information" class="section level2">
+<h2>Reproducibility Information</h2>
+<pre class="r"><code>pander(sessionInfo())</code></pre>
+<p><strong>R version 3.1.2 (2014-10-31)</strong></p>
+<p><strong>Platform:</strong> x86_64-apple-darwin13.4.0 (64-bit)</p>
+<p><strong>locale:</strong></p>
+<p><strong>attached base packages:</strong> [1] “<em>grid</em>, <em>stats</em>, <em>graphics</em>, <em>grDevices</em>, <em>utils</em>, <em>datasets</em>, <em>methods</em> and <em>base</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>other attached packages:</strong> [1] “<em>pander(v.0.5.1)</em>, <em>gridExtra(v.0.9.1)</em>, <em>xtable(v.1.7-4)</em>, <em>ggplot2(v.1.0.0)</em> and <em>knitr(v.1.8)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>loaded via a namespace (and not attached):</strong> [1] “<em>colorspace(v.1.2-4)</em>, <em>digest(v.0.6.4)</em>, <em>evaluate(v.0.5.5)</em>, <em>formatR(v.1.0)</em>, <em>gtable(v.0.1.2)</em>, <em>htmltools(v.0.2.6)</em>, <em>labeling(v.0.3)</em>, <em>MASS(v.7.3-35)</em>, <em>munsell(v.0.4.2)</em>, <em>plyr(v.1.8.1)</em>, <em>proto(v.0.3-10)</em>, <em>Rcpp(v.0.11.3)</em>, <em>reshape2(v.1.4)</em>, <em>rmarkdown(v.0.3.10)</em>, <em>scales(v.0.2.4)</em>, <em>stringr(v.0.6.2)</em>, <em>tools(v.3.1.2)</em> and <em>yaml(v.2.1.13)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

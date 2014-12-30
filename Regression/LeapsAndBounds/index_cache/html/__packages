@@ -1,0 +1,17 @@
+base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
+ggplot2
+nortest
+plyr
+lattice
+RColorBrewer
+foreach
+iterators
+parallel
+doMC
+pander

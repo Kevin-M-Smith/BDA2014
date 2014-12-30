@@ -1,0 +1,270 @@
+# Vignette: The $R^2$ Ratchet
+  
+  
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" />
+<link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" />
+<link type="text/css" rel="stylesheet" href="css/style.css"
+<head> <div id="tableofcontents"></div> </head>
+<div id="source" class="tocify"> 
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li></ul>
+</div>
+__Kevin M. Smith // Environmental Statistics // Fall 2014__
+
+
+<hr>
+
+```r
+library(knitr)        # For Publishing
+library(pander)       # For Printing Tables
+
+panderOptions('table.split.table', Inf)
+```
+
+# Overview
+<img src="images/ratchet.png", style = "float:left;"></img> Here we are concerned with estimating the mean of the vector $y = X\beta + \epsilon$ using ordinary least squares linear regression models. The purpose of this short note is to introduce the __ratcheting effect__ that adding new predictors $X_{p+1}$ has on the residual sum of squares (↓) and the coefficient of determination $R^2$ (↑). This effect is often referred to as the _inflation_ of $R^2$, but I prefer the image of a [ratchet](http://en.wikipedia.org/wiki/Ratchet_(device)). This also helps to distinguish it from other "inflations" in regression, [such as the variance inflation factor](http://en.wikipedia.org/wiki/Variance_inflation_factor).
+
+<br><br>
+
+# $R^2$
+
+Again, our desire is to estimate the mean of the vector $y = X\beta + \epsilon$ where $X$ is a $n$ by $p$ [design matrix](http://en.wikipedia.org/wiki/Design_matrix). In general, increasing $p$ (the number of predictors) relative to $n$ (the number of observations) will reduce the residual sum of squares, $RSS = \sum_i^n (y_i - \hat{y})$ and increase the [coefficient of determination](http://en.wikipedia.org/wiki/Coefficient_of_determination) $R^2 = 1 - \frac{RSS}{\sum_i^n(y_i - \bar{y})^2}$ regardless of whether or not the new predictor $X_{p+1}$ is a causal driver of $y$ or just random noise. 
+
+Consider that the [Pearson product-moment correlation coefficient](http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient) for a sample $r_{y,X_{p+1}}$ is extremely unlikely to be exactly zero. As a consequence, its square $r_{y,X_{p+1}}^2$ is almost always positive, even when $X_{p+1}$ accounts for no variance in the population. So the new predictor will almost always add some contribution to $R^2$ even if the true population value of the Pearson product-moment correlation coefficient $\rho_{y,X_{p+1}} = 0$.
+
+## Example
+Consider 5 independent uniformly distributed random variables, $\mathbb{R} \in [1, 5]$, : __$x1, x2, x3, x4, x5 \sim U(1, 5)$__.
+ <br>
+Now define __$y \equiv x1 + \epsilon$__ where $\epsilon \sim N(0, 1)$. Below are the results of a step-wise linear regression on $y$ by $x1 ... x5$. The RSS decreases and $R^2$ increases with additional predictors even when $X_{p+1}$ is random noise. 
+
+<hr>
+
+
+```r
+set.seed(202)
+
+x1 = runif(100, 1, 5)
+x2 = runif(100, 1, 5)
+x3 = runif(100, 1, 5)
+x4 = runif(100, 1, 5)
+x5 = runif(100, 1, 5)
+
+y = x1 + rnorm(100)
+
+fit1 <- lm(y~x1)
+fit2 <- lm(y~x1+x2)
+fit3 <- lm(y~x1+x2+x3)
+fit4 <- lm(y~x1+x2+x3+x4)
+fit5 <- lm(y~x1+x2+x3+x4+x5)
+
+
+models <- c("y ~ x1 + $\\epsilon$", 
+            "y ~ x1 + x2 + $\\epsilon$",
+            "y ~ x1 + x2 + x3 + $\\epsilon$",
+            "y ~ x1 + x2 + x3 + x4 + $\\epsilon$",
+            "y ~ x1 + x2 + x3 + x4 + x5 + $\\epsilon$")
+
+rss <- c(anova(fit1)$`Sum Sq`[2], 
+         anova(fit2)$`Sum Sq`[3],
+         anova(fit3)$`Sum Sq`[4],
+         anova(fit4)$`Sum Sq`[5],
+         anova(fit5)$`Sum Sq`[6])
+
+r2 <- c(summary(fit1)$r.squared,
+        summary(fit2)$r.squared,
+        summary(fit3)$r.squared,
+        summary(fit4)$r.squared,
+        summary(fit5)$r.squared)
+
+
+results <- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2)
+
+
+
+pander(results, caption = "__True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.")
+```
+
+
+-----------------------------------------------
+           models              rss   r.squared 
+----------------------------- ----- -----------
+     y ~ x1 + $\epsilon$       110    0.5192   
+
+  y ~ x1 + x2 + $\epsilon$    105.7   0.5384   
+
+y ~ x1 + x2 + x3 + $\epsilon$ 105.4   0.5397   
+
+   y ~ x1 + x2 + x3 + x4 +    104.9   0.5419   
+         $\epsilon$                            
+
+y ~ x1 + x2 + x3 + x4 + x5 +  104.7   0.5427   
+         $\epsilon$                            
+-----------------------------------------------
+
+Table: __True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.
+
+
+__N.B.__ RSS is a non-increasing function of _p_, but RSS can be _unchanged_ with $p_{n+1}$, e.g. under [regularization](http://en.wikipedia.org/wiki /Regularization_(mathematics)) or by chance. Nevertheless, $RSS_{p} \ge RSS_{p+1}$ holds. 
+
+<hr>
+
+# Adjusted $R^2$
+
+In order to counter this ratcheting effect, methods have been developed to penalize the number of variables in a model. Perhaps the most common is the so-called _corrected_ or _adjusted_ $R^2$. Unfortunately, there are several _adjusted $R^2$'s_ in existence, and it is not always clear which is being referred to. There are even multiple formulas attributed to the same person (e.g. R.J. Wherry). See __Yin and Fan__ for a summary. In their article Yin and Fan suggest that the following Wherry Formula seems to be most common: $\bar{R}^2 \equiv 1 - (1 - R^2)\frac{n-1}{n-p-1}$, where $\bar{R}^2$ is the adjusted $R^2$. As such, $\bar{R}^2 \le R^2$. Note that the square term in $\bar{R}^2$ has no significance except to note its relationship to $R^2$, so negative values are possible. 
+
+## Example 
+Let us now add the adjusted $R^2$ measure to our previous example.  
+<hr>
+
+```r
+adj.r2 <- c(summary(fit1)$adj.r.squared,
+            summary(fit2)$adj.r.squared,
+            summary(fit3)$adj.r.squared,
+            summary(fit4)$adj.r.squared,
+            summary(fit5)$adj.r.squared)
+
+
+results <- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2,
+                      adj.r.squared = adj.r2)
+
+pander(results, caption = "__True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.")
+```
+
+
+---------------------------------------------------------------
+           models              rss   r.squared   adj.r.squared 
+----------------------------- ----- ----------- ---------------
+     y ~ x1 + $\epsilon$       110    0.5192        0.5143     
+
+  y ~ x1 + x2 + $\epsilon$    105.7   0.5384        0.5289     
+
+y ~ x1 + x2 + x3 + $\epsilon$ 105.4   0.5397        0.5253     
+
+   y ~ x1 + x2 + x3 + x4 +    104.9   0.5419        0.5226     
+         $\epsilon$                                            
+
+y ~ x1 + x2 + x3 + x4 + x5 +  104.7   0.5427        0.5183     
+         $\epsilon$                                            
+---------------------------------------------------------------
+
+Table: __True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.
+
+__N.B.__ While $\bar{R}$ is not a _perfect_ correction, it is based on rigorous mathematics. For instance the work of [Ronald Fisher](http://en.wikipedia.org/wiki/Ronald_Fisher) and his contemporaries (e.g. [John Wishart](http://en.wikipedia.org/wiki/John_Wishart_%28statistician%29)) shows that for samples drawn a normal distribution with $\rho_{x_i,x_j} = 0$, $R^2$ is distributed according to the $F$-distribution with $\mathbb{E}[R^2] = \frac{p}{n-1}$. See __Crocker__ or __Wishart__ for details on the distribution of $R^2$ and __Wherry__ for the original derivation. 
+<hr>
+
+# $R_{pred}^2$
+
+## From RSS to PRESS
+Both $R^2$ and $\bar{R}^2$ are related to the residual sum of squares, $RSS = \sum_i^n (y_i - \hat{y})$. The RSS is a measure of the errors $e_i = \hat{y_i} - y_{i,obs}$, where $y_{i, obs}$ is in the training set. In 1971 David Allen proposed the prediction sum of squares (PRESS) which is an equivalent measure that replaces $e_i$ with $e_{(i)}$ where $e_{(i)} = \hat{y_i} - y_{i,obs}$ when $y_{i,obs}$ is held out of the training set. In the general case this means building _n_ models and obtaining only one $e_{(i)}$ for each run. This is equivalent to Leave-One-Out Cross validation. 
+<br><br>
+Fortunately there is some serendipity in the maths that makes this tractable the case of linear regression. Namely, it can be shown that $e_{(i)} = \frac{e_i}{1 - h_{i,i}}$ where $h_{i,i}$ is the diagonal of the __"hat"__ matrix: $H = X(X^TX)^{-1}X^T$. Here, as in the rest of this note, $X$ is a $n$ by $p$ [design matrix](http://en.wikipedia.org/wiki/Design_matrix). The hat matrix is so called because it puts the hat on $y$, i.e. $\hat{y} = Hy$. Since matrix algebra is the workhorse of most linear regression routines, $e_{(i)}$ can be obtained without much extra computation. Finally, $PRESS = \sum_i^n (e_{(i)})^2$. 
+<br><br>
+
+## From PRESS to $R_{pred}^2$
+Recall, $R^2 = 1 - \frac{RSS}{\sum_i^n(y_i - \bar{y})^2}$. Likewise $R_{pred}^2 = 1 - \frac{PRESS}{\sum_i^n(y_i - \bar{y})^2}$. $R_{pred}^2$ works against the ratchet because as $p$ increases (↑), the ability of the model to generalize to unseen data decreases (↓). 
+
+## Example
+Finally, let us now add the $R_{pred}^2$ measure to our previous example. 
+
+<hr>
+
+```r
+PRESS <- c(sum((residuals(fit1)/(1-lm.influence(fit1)$hat))^2),
+           sum((residuals(fit2)/(1-lm.influence(fit2)$hat))^2),
+           sum((residuals(fit3)/(1-lm.influence(fit3)$hat))^2),
+           sum((residuals(fit4)/(1-lm.influence(fit4)$hat))^2),
+           sum((residuals(fit5)/(1-lm.influence(fit5)$hat))^2))
+
+TSS <- c(sum(anova(fit1)$`Sum Sq`),
+         sum(anova(fit2)$`Sum Sq`),
+         sum(anova(fit3)$`Sum Sq`),
+         sum(anova(fit4)$`Sum Sq`),
+         sum(anova(fit5)$`Sum Sq`))
+
+pred.r2 <- 1 - (PRESS / TSS);
+
+results <- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2,
+                      adj.r.squared = adj.r2,
+                      pred.r.squared = pred.r2)
+
+pander(results, caption = "__True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.")
+```
+
+
+--------------------------------------------------------------------------------
+           models              rss   r.squared   adj.r.squared   pred.r.squared 
+----------------------------- ----- ----------- --------------- ----------------
+     y ~ x1 + $\epsilon$       110    0.5192        0.5143            0.5       
+
+  y ~ x1 + x2 + $\epsilon$    105.7   0.5384        0.5289           0.5115     
+
+y ~ x1 + x2 + x3 + $\epsilon$ 105.4   0.5397        0.5253           0.5024     
+
+   y ~ x1 + x2 + x3 + x4 +    104.9   0.5419        0.5226           0.4936     
+         $\epsilon$                                                             
+
+y ~ x1 + x2 + x3 + x4 + x5 +  104.7   0.5427        0.5183           0.4861     
+         $\epsilon$                                                             
+--------------------------------------------------------------------------------
+
+Table: __True relationship is y = x1 + ɛ.__ <br> Predictors x2-x5 are unrelated random noise.
+
+_N.B._ As hoped, $R_{pred}^2$ decreases when we add pure noise predictors, although this is not a strict rule, since $R_{pred}^2$, unlike $R^2$ and $\bar{R}^2$ is not a monotonic function of RSS. 
+
+<hr>
+
+# References
+
+ * D. Allen A., “The prediction sum of squares as a criterion for selecting predictor variables.,” University of Kentucky, Department of Statistics, 23, 1971.
+ 
+  * D. C. Crocker, “Some Interpretations of the Multiple Correlation Coefficient,” The American Statistician, vol. 26, no. 2, p. 31, Apr. 1972
+
+ * P. Yin and X. Fan, “Estimating R 2 shrinkage in multiple regression: a comparison of different analytical methods,” The Journal of Experimental Education, vol. 69, no. 2, pp. 203–224, 2001.
+
+ * R. J. Wherry, “A New Formula for Predicting the Shrinkage of the Coefficient of Multiple Correlation,” The Annals of Mathematical Statistics, vol. 2, no. 4, pp. pp. 440–457, 1931.
+ 
+ * J. Wishart, “The Mean and Second Moment Coefficient of the Multiple Correlation Coefficient, in Samples from a Normal Population,” Biometrika, vol. 22, no. 3/4, p. 353, May 1931.
+
+
+# Appendix
+
+## Reproducibility Information
+
+```r
+sessionInfo()
+```
+
+R version 3.1.2 (2014-10-31)
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] pander_0.5.1 knitr_1.8   
+
+loaded via a namespace (and not attached):
+[1] digest_0.6.4     evaluate_0.5.5   formatR_1.0      htmltools_0.2.6 
+[5] Rcpp_0.11.3      rmarkdown_0.3.10 stringr_0.6.2    tools_3.1.2     
+[9] yaml_2.1.13     
+
+ 

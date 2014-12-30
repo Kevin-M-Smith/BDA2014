@@ -1,0 +1,112 @@
+---
+title: "Vignette: What did you _mean_?"
+author: ""
+date: ""
+output:
+  html_document:
+    theme: spacelab
+    toc: yes
+---
+__Kevin M. Smith // Environmental Statistics // Fall 2014__
+
+
+# Overview
+__A mean is a conservative summary measure__. That is to say, a mean reduces a set of numbers to a single measure that conserves some desired numerical property. This note briefly presents the conservative properties of three common means - the arithmetic mean, the harmonic mean, and the geometric mean - with the hope of clarifying their roles in specific types of problems. 
+
+# Arithmetic Mean - Conserving the Sum
+The familiar __arithmetic mean__ is the value _a_ that summarizes $x_1, x_2, ... x_n$ such that the sum, $\sum_i^n x_i$ is conserved.
+
+For example, one would hope that reported gasoline efficiencies (fuel / distance) are arithmetic means. The utility of a gasoline efficiency measure is to provide insight into gasoline consumption. As a consequence, we should be able to recover an unbiased estimate of the total gasoline consumed as $a \cdot n$, where n is the distance recorded by the odometer. 
+
+# Harmonic Mean - Conserving the Sum of the Reciprocals
+The perhaps less familiar __harmonic mean__ is the value _h_ that summarizes $x_1, x_2, ... x_n$ such that the sum, $\sum_i^n \frac{1}{x_i}$ is conserved. It is this reason that the harmonic mean is often used to represent the average of a rate (reciprocal). 
+
+For example, a 60's era hiring manager would hope that an honest secretary applying for a job would report their typing speed as a harmonic mean. Before photocopying machines came along, many secretaries spent all day typing copies of the same manuscript over and over. Now imagine that such a company wanted to screen prospective employees by requiring them to type four copies of a 600 word document and report their average typing speed.
+
+|        | Time   | Speed  |
+|--------|--------|--------|
+| Copy 1 | 10 min | 60 wpm |
+| Copy 2 | 12 min | 50 wpm |
+| Copy 3 | 20 min | 30 wpm |
+| Copy 4 | 15 min | 40 wpm |
+
+In the _R_ programming language, this problem can be set up as follows:
+```{r}
+T1 = 10; S1 = 60 
+T2 = 12; S2 = 50 
+T3 = 20; S3 = 30 
+T4 = 15; S4 = 40
+
+words.per.copy = 600
+number.of.copies = 4
+total.time = T1 + T2 + T3 + T4
+total.words = number.of.copies * words.per.copy
+average.speed = total.words / total.time
+average.time = total.time / number.of.copies
+```
+
+```{r, echo = FALSE, results = 'asis'}
+cat(paste("Running the calculations reveals that the typist completed __", total.words, "__ total words in __", total.time, "__ minutes, for an average typing speed of __", round(average.speed, 1), " __ words per minute. If the secretary reported the results of the test as an arithmetic mean:", sep = "")) 
+```
+
+```{r}
+a = (S1 + S2 + S3 + S4) * 0.25
+```
+
+```{r, echo = FALSE, results = 'asis'}
+cat(paste("The speed would be biased high at  __", a, "__ words per minute, suggesting the average time spent per copy was only __", round(words.per.copy / a,2) , "__ minutes instead of the true value of __", average.time, "__ minutes per copy. However, calculating the average speed as the harmonic mean:", sep="")) 
+```
+
+```{r}
+h = 4 / (1/S1 + 1/S2 + 1/S3 + 1/S4) 
+```
+
+```{r, echo = FALSE, results = 'asis'}
+cat(paste("The speed is correctly reported as __", round(h, 1), "__ words per minute, which conserves the total typing time of __", round(words.per.copy / h * number.of.copies, 2) , "__ minutes, or __", words.per.copy/h, "__ minutes per copy. A small difference in this instance, but as they say, time is money - a sentiment that follows us to the geometric mean. ", sep="")) 
+```
+
+# Geometric Mean - Conserving the Product
+The __geometric mean__ is the value _g_ that summarizes $x_1, x_2, ... x_n$ such that the product, $\prod_i^n x_i$ is conserved.
+
+The geometric mean finds a natural home in finance where the critical value of concern is often the average rate of return for a period (expressed as a percentage) such that the final value of a portfolio after __n__ periods is conserved. 
+
+Consider the following information:
+
+ * Initial portfolio value: $10,000 
+ * Period 1: + 2.0 % 
+ * Period 2: - 0.5 % 
+ * Period 3: + 3.1 % 
+ * Period 4: + 1.7 % 
+
+In the _R_ programming language, this problem can be written as follows:
+```{r}
+initial.value = 10000
+P1 = 1 +  0.020
+P2 = 1 + -0.050
+P3 = 1 +  0.031
+P4 = 1 +  0.017
+final.value = initial.value*P1*P2*P3*P4
+```
+
+```{r, echo = FALSE, results = 'asis'}
+cat(paste("Which yeilds a final value of __$", round(final.value,0) , "__. If we use an arithmetic mean to capture the average __rate of return__:", sep = ""))
+```
+
+```{r}
+a = (P1 + P2 + P3 + P4) * 0.25
+final.value = initial.value * a^4
+```
+
+```{r, echo = FALSE, results='asis'}
+cat(paste("We overestimate the final value of the portfolio at __$", round(final.value,0), "__. However, if we use a geometric mean:", sep = ""))
+```
+
+```{r}
+g = (P1 * P2 * P3 * P4)^0.25
+final.value = initial.value * g^4
+```
+
+```{r, echo = FALSE, results = 'asis'}
+cat(paste("We obtain the correct final portfolio value of __$", round(final.value,0), "__.", sep = ""))
+```
+
