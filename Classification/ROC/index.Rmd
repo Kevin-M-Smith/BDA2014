@@ -1,0 +1,278 @@
+---
+title: "Vignette: ROC Curves"
+author: ''
+date: ''
+output:
+  html_document:
+    fig_width: 10
+    keep_md: yes
+    self_contained: no
+    theme: spacelab
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" />
+<link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" />
+<link type="text/css" rel="stylesheet" href="css/style.css" />
+<link type="text/css" rel="stylesheet" href="css/scianimator.blue.css" />
+<head> <div id="tableofcontents"></div> </head>
+<div id="source" class="tocify"> 
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li></ul>
+</div>
+
+__Kevin M. Smith // Big Data Analytics // Fall 2014__
+<hr>
+```{r, warning=FALSE, message=FALSE, results='hide'}
+library(knitr)
+library(ggplot2)
+library(pander)
+require(pROC)
+require(plyr)
+require(data.table)
+require(gridExtra)
+
+opts_knit$set(fig.width = 10,
+              xtable.type = 'html',
+              warning = FALSE,
+              cache = TRUE,
+              dev = 'png',
+              animation.fun = hook_scianimator_controls)
+
+options(xtable.comment = FALSE)
+panderOptions('table.split.table', Inf)
+
+# color blind pallete from http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/`
+cbPalette <- 
+  c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+```
+
+# Overview
+The purpose of this short note is to explore the effects of the classification threshold on true positive and false positive rates when working with Receiver Operating Characteristic (ROC) Curves. ROC Curves are used in classification problems to show the tradeoff between the True Positive Rate and the False Positive Rate.
+
+# In the Laboratory
+In this vignette we will work with randomly generated data. In this ficticious example, we will denote two populations: right-handed and left-handed people, with normally distributed IQ scores with differing population means and standard deviations. 
+
+## Example - Ideal Classification
+To demonstrate classification under an ideal scenario, we will set up our two populations so that there is only a very small chance of an incorrect classification. 
+
+<div text-align:"center">
+$IQ_{Left-Handed} \sim N(190, 5)$ <br>
+$IQ_{Right-Handed} \sim N(120, 10)$
+</div>
+
+```{r, dev='png', fig.height=4, warning=FALSE}
+set.seed(100)
+
+# Number | Mean | Standard Deviation
+lN = 1000;  lM = 190; lS = 5          # Left-Handed
+rN = 9000;  rM = 120; rS = 10         # Right-Handed
+
+data <- data.frame(
+  
+  left.handed = c(rep(TRUE, lN), 
+                  rep(FALSE, rN)),
+  
+  iq = c(rnorm(lN, lM, lS), 
+         rnorm(rN, rM, rS))
+  
+  )
+
+head(data); tail(data);
+```
+
+### Histograms & Density Plots
+The histograms for the populations are shown below. There is a clear line that could be drawn to separate the two populations with little or no judgement required. 
+
+```{r, dev='png', fig.height=4, warning=FALSE}
+g <- ggplot(data = data)
+g <- g + geom_histogram(
+  aes(x = iq, fill = left.handed), alpha = 0.5)
+g <- g + scale_fill_discrete(name = "Left Handed")
+g <- g + theme(legend.position = "bottom") 
+#g <- g + scale_fill_manual(values=cbPalette)
+g
+```
+
+By using a kernel density smooth we can eliminate the staggered effect caused by the binning. We will work with kernel density smooths like the one shown below throughout the vignette. 
+```{r, dev='png', fig.height=4, warning=FALSE}
+g <- ggplot(data = data)
+g <- g + geom_density(
+  aes(x = iq, fill = left.handed), alpha = 0.5)
+g <- g + scale_fill_discrete(name = "Left Handed")
+g <- g + theme(legend.position = "bottom") 
+#g <- g + scale_fill_manual(values=cbPalette)
+g
+```
+
+## Judgemental Classification
+Conditions are rarely so ideal. What happens if our population means for IQ are a bit closer?
+
+<div text-align:"center">
+$IQ_{Left-Handed} \sim N(140, 5)$ <br>
+$IQ_{Right-Handed} \sim N(120, 10)$
+</div>
+
+```{r, dev='png', fig.height=4, warning=FALSE}
+set.seed(100)
+
+# Number | Mean | Standard Deviation
+lN = 1000;  lM = 140; lS = 5          # Left-Handed
+rN = 9000;  rM = 120; rS = 10         # Right-Handed
+
+data <- data.frame(
+  
+  left.handed = c(rep(TRUE, lN), 
+                  rep(FALSE, rN)),
+  
+  iq = c(rnorm(lN, lM, lS), 
+         rnorm(rN, rM, rS))
+  
+  )
+
+head(data); tail(data);
+```
+
+
+There is no longer a line that would cleaning separate the two populations. The threshold will now require some judgement, since the placement of the line will determine the __True Positive, False Positive, True Negative, and False Negative Rates__.
+
+```{r, dev='png', fig.height=4, warning=FALSE}
+g <- ggplot(data = data)
+g <- g + geom_density(
+  aes(x = iq, y = ..scaled.., color = left.handed), alpha = 0.5)
+#g <- g + scale_fill_continuous(name = "Actually Left Handed?")
+#g <- g + scale_color_discrete(name = "Classification Result for Left-Handedness")
+
+g <- g + theme(legend.position = "bottom")
+#g <- g + scale_color_manual(name = "Actually Left Handed?", values=cbPalette) 
+g
+```
+
+
+```{r, dev='png', fig.height=4, warning=FALSE}
+classify <- function(value, breakpoint){
+  return(value > breakpoint)
+}
+
+score <- function(classification, truth){  
+  type <- as.vector(rep("", length(truth)))
+  type[classification & truth] <- "True Positive"
+  type[classification & !truth] <- "False Positive"
+  type[!classification & !truth] <- "True Negative"
+  type[!classification & truth] <- "False Negative"
+  return(type)
+}
+
+is.correct <- function(results){
+  correct <- as.vector(rep(FALSE, length(results)))
+  correct[grep("True", results)] <- TRUE
+  return(correct)
+}
+
+breakpoint = 131.75
+```
+
+### The ROC Curve
+
+The ROC curve shows the trade-off frontier for the True Positive and False Positive Rates produced by all possible threshold values. The vertical axis shows the True Positive Rate, which is also known as the __Sensitivity__. The horizontal axis shows the False Positive Rate, which is related to the __Specificity__, by $FPR = 1 - Specificity$.
+
+```{r, fig.height = 5, dev = 'png', warning = FALSE, cache = TRUE}
+roc.data <- roc(left.handed ~ iq, data, plot = FALSE)
+roc.data <- data.frame(sensitivity = roc.data$sensitivities,
+                       specificity = 1 - roc.data$specificities)
+
+roc.base <- ggplot(roc.data, aes(x = specificity, y = sensitivity)) + 
+  geom_abline(color = "grey", lwd = 1) + geom_line(lwd = 1.5) + 
+  xlab("False Positive Rate") + ylab("True Positive Rate") + ggtitle("ROC Curve")
+
+roc.base2 <- ggplot(roc.data, aes(x = 1 - specificity, y = sensitivity)) + 
+  geom_abline(color = "grey", lwd = 1, intercept = 1) + geom_line(lwd = 1.5) + 
+  xlab("Sensitivity") + ylab("Specificity") + ggtitle("ROC Curve") +
+  scale_x_reverse()
+
+grid.arrange(roc.base, roc.base2, ncol = 2, main = "Two Common Representations of ROC Curves")
+```
+
+### How the ROC Curve is Formed
+This animation shows how the ROC curve is formed as the threshold is moved over the range of possible threshold values. Each threshold value corresponds to a different set of classification errors. Use the controls just below the figure to see how the ROC curve is built bit-by-bit. 
+
+```{r, dev='png', fig.height=8, fig.show='animate', warning=FALSE, interval=0.05, cache = TRUE}
+
+
+for(breakpoint in c(seq(130, 145, 0.5), 
+                    seq(145, 130, -0.5))){
+ 
+data.classified <- mutate(data, 
+                prediction = classify(iq, breakpoint), 
+                results = score(prediction, left.handed),
+                correct = is.correct(results))
+
+plot.info <- ggplot_build(g)$data[[1]]
+
+g1 <- ggplot() + geom_ribbon(data = subset(plot.info, x > breakpoint & group == 2),
+                aes(x = x, ymin = ymin, ymax = ymax, fill = "True Positive")) + 
+  
+  geom_ribbon(data = subset(plot.info, x < breakpoint & group == 1),
+                aes(x = x, ymin = ymin, ymax = ymax, fill = "True Negative")) + 
+  
+  geom_ribbon(data = subset(plot.info, x > breakpoint & group == 1),
+                aes(x = x, ymin = ymin, ymax = ymax, fill = "False Positive")) +
+  
+  geom_ribbon(data = subset(plot.info, x < breakpoint & group == 2),
+                aes(x = x, ymin = ymin, ymax = ymax, fill = "False Negative")) +
+  
+  scale_fill_discrete(name = "Classification Result for Left-Handedness")
+
+g1 <- g1 + geom_vline(x = breakpoint, size = 2, color = "black") + 
+  theme(legend.position = "bottom")
+
+g2 <- ggplot(data.classified, aes(x = left.handed, fill = results)) + geom_bar(position = "fill")
+g2 <- g2 + theme(legend.position = "none") 
+g2 <- g2 + xlab("Left Handed?") + ylab("Classification Success / Error Rates")
+
+contingency <- with(data.classified, 
+                    table(prediction, left.handed))
+
+contingency[1,1] <- contingency[1,1] / rN
+contingency[1,2] <- contingency[1,2] / lN
+contingency[2,1] <- contingency[2,1] / rN
+contingency[2,2] <- contingency[2,2] / lN
+
+colnames(contingency) <- c("Right Handed", "Left Handed")
+rownames(contingency) <- c("Classified Right", "Classified Left")
+
+g3 <- tableGrob(formatC(contingency, format = "f", digits = 2),
+            row.just = "right",
+            gpar.rowtext = gpar(col = "black", cex = 1, fontface = "bold"))
+
+g4 <- roc.base + annotate("point", x = contingency[2,1], y = contingency[2,2], color = "red", size = 8)
+
+#grid.arrange(g1, g2, g3, roc.base, nrow = 2, widths = c(3.5, 1, 2, 2.5), 
+
+grid.arrange(arrangeGrob(g1, g2, ncol = 2, widths = c(3.5, 1)),
+             arrangeGrob(g3, g4, ncol = 2, widths = c(2, 2.5)),
+             nrow = 2, main = paste("Classification, Threshold =", formatC(breakpoint, format = "f", digits = 1)))
+
+}
+
+```
+
+
+# Appendix
+
+## Reproducibility Information
+```{r, results='asis'}
+pander(sessionInfo())
+```
