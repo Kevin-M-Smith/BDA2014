@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Vignette: The R^2 Ratchet</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Vignette: The <span class="math">\(R^2\)</span> Ratchet</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#r2"><span class="math">\(R^2\)</span></a><ul>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#adjusted-r2">Adjusted <span class="math">\(R^2\)</span></a><ul>
+<li><a href="#example-1">Example</a></li>
+</ul></li>
+<li><a href="#r_pred2"><span class="math">\(R_{pred}^2\)</span></a><ul>
+<li><a href="#from-rss-to-press">From RSS to PRESS</a></li>
+<li><a href="#from-press-to-r_pred2">From PRESS to <span class="math">\(R_{pred}^2\)</span></a></li>
+<li><a href="#example-2">Example</a></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+<li><a href="#appendix">Appendix</a><ul>
+<li><a href="#reproducibility-information">Reproducibility Information</a></li>
+</ul></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<p><strong>Kevin M. Smith // Big Data Analytics // Fall 2014</strong></p>
+<hr>
+<pre class="r"><code>library(knitr)        # For Publishing
+library(pander)       # For Printing Tables
+
+panderOptions(&#39;table.split.table&#39;, Inf)</code></pre>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p><img src="images/ratchet.png", style = "float:left;"></img> Here we are concerned with estimating the mean of the vector <span class="math">\(y = X\beta + \epsilon\)</span> using ordinary least squares linear regression models. The purpose of this short note is to introduce the <strong>ratcheting effect</strong> that adding new predictors <span class="math">\(X_{p+1}\)</span> has on the residual sum of squares (↓) and the coefficient of determination <span class="math">\(R^2\)</span> (↑). This effect is often referred to as the <em>inflation</em> of <span class="math">\(R^2\)</span>, but I prefer the image of a <a href="http://en.wikipedia.org/wiki/Ratchet_(device)">ratchet</a>. This also helps to distinguish it from other “inflations” in regression, <a href="http://en.wikipedia.org/wiki/Variance_inflation_factor">such as the variance inflation factor</a>.</p>
+<p><br><br></p>
+</div>
+<div id="r2" class="section level1">
+<h1><span class="math">\(R^2\)</span></h1>
+<p>Again, our desire is to estimate the mean of the vector <span class="math">\(y = X\beta + \epsilon\)</span> where <span class="math">\(X\)</span> is a <span class="math">\(n\)</span> by <span class="math">\(p\)</span> <a href="http://en.wikipedia.org/wiki/Design_matrix">design matrix</a>. In general, increasing <span class="math">\(p\)</span> (the number of predictors) relative to <span class="math">\(n\)</span> (the number of observations) will reduce the residual sum of squares, <span class="math">\(RSS = \sum_i^n (y_i - \hat{y})\)</span> and increase the <a href="http://en.wikipedia.org/wiki/Coefficient_of_determination">coefficient of determination</a> <span class="math">\(R^2 = 1 - \frac{RSS}{\sum_i^n(y_i - \bar{y})^2}\)</span> regardless of whether or not the new predictor <span class="math">\(X_{p+1}\)</span> is a causal driver of <span class="math">\(y\)</span> or just random noise.</p>
+<p>Consider that the <a href="http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">Pearson product-moment correlation coefficient</a> for a sample <span class="math">\(r_{y,X_{p+1}}\)</span> is extremely unlikely to be exactly zero. As a consequence, its square <span class="math">\(r_{y,X_{p+1}}^2\)</span> is almost always positive, even when <span class="math">\(X_{p+1}\)</span> accounts for no variance in the population. So the new predictor will almost always add some contribution to <span class="math">\(R^2\)</span> even if the true population value of the Pearson product-moment correlation coefficient <span class="math">\(\rho_{y,X_{p+1}} = 0\)</span>.</p>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<p>Consider 5 independent uniformly distributed random variables, <span class="math">\(\mathbb{R} \in [1, 5]\)</span>, : <strong><span class="math">\(x1, x2, x3, x4, x5 \sim U(1, 5)\)</span></strong>. <br> Now define <strong><span class="math">\(y \equiv x1 + \epsilon\)</span></strong> where <span class="math">\(\epsilon \sim N(0, 1)\)</span>. Below are the results of a step-wise linear regression on <span class="math">\(y\)</span> by <span class="math">\(x1 ... x5\)</span>. The RSS decreases and <span class="math">\(R^2\)</span> increases with additional predictors even when <span class="math">\(X_{p+1}\)</span> is random noise.</p>
+<hr>
+<pre class="r"><code>set.seed(202)
+
+x1 = runif(100, 1, 5)
+x2 = runif(100, 1, 5)
+x3 = runif(100, 1, 5)
+x4 = runif(100, 1, 5)
+x5 = runif(100, 1, 5)
+
+y = x1 + rnorm(100)
+
+fit1 &lt;- lm(y~x1)
+fit2 &lt;- lm(y~x1+x2)
+fit3 &lt;- lm(y~x1+x2+x3)
+fit4 &lt;- lm(y~x1+x2+x3+x4)
+fit5 &lt;- lm(y~x1+x2+x3+x4+x5)
+
+
+models &lt;- c(&quot;y ~ x1 + $\\epsilon$&quot;, 
+            &quot;y ~ x1 + x2 + $\\epsilon$&quot;,
+            &quot;y ~ x1 + x2 + x3 + $\\epsilon$&quot;,
+            &quot;y ~ x1 + x2 + x3 + x4 + $\\epsilon$&quot;,
+            &quot;y ~ x1 + x2 + x3 + x4 + x5 + $\\epsilon$&quot;)
+
+rss &lt;- c(anova(fit1)$`Sum Sq`[2], 
+         anova(fit2)$`Sum Sq`[3],
+         anova(fit3)$`Sum Sq`[4],
+         anova(fit4)$`Sum Sq`[5],
+         anova(fit5)$`Sum Sq`[6])
+
+r2 &lt;- c(summary(fit1)$r.squared,
+        summary(fit2)$r.squared,
+        summary(fit3)$r.squared,
+        summary(fit4)$r.squared,
+        summary(fit5)$r.squared)
+
+
+results &lt;- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2)
+
+
+
+pander(results, caption = &quot;__True relationship is y = x1 + ɛ.__ &lt;br&gt; Predictors x2-x5 are unrelated random noise.&quot;)</code></pre>
+<table>
+<caption><strong>True relationship is y = x1 + ɛ.</strong> <br> Predictors x2-x5 are unrelated random noise.</caption>
+<colgroup>
+<col width="41%" />
+<col width="8%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">models</th>
+<th align="center">rss</th>
+<th align="center">r.squared</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">y ~ x1 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">110</td>
+<td align="center">0.5192</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.7</td>
+<td align="center">0.5384</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.4</td>
+<td align="center">0.5397</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + x3 + x4 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.9</td>
+<td align="center">0.5419</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + x4 + x5 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.7</td>
+<td align="center">0.5427</td>
+</tr>
+</tbody>
+</table>
+<p><strong>N.B.</strong> RSS is a non-increasing function of <em>p</em>, but RSS can be <em>unchanged</em> with <span class="math">\(p_{n+1}\)</span>, e.g. under <a href="http://en.wikipedia.org/wiki%20/Regularization_(mathematics)">regularization</a> or by chance. Nevertheless, <span class="math">\(RSS_{p} \ge RSS_{p+1}\)</span> holds.</p>
+<hr>
+</div>
+</div>
+<div id="adjusted-r2" class="section level1">
+<h1>Adjusted <span class="math">\(R^2\)</span></h1>
+<p>In order to counter this ratcheting effect, methods have been developed to penalize the number of variables in a model. Perhaps the most common is the so-called <em>corrected</em> or <em>adjusted</em> <span class="math">\(R^2\)</span>. Unfortunately, there are several <em>adjusted <span class="math">\(R^2\)</span>’s</em> in existence, and it is not always clear which is being referred to. There are even multiple formulas attributed to the same person (e.g. R.J. Wherry). See <strong>Yin and Fan</strong> for a summary. In their article Yin and Fan suggest that the following Wherry Formula seems to be most common: <span class="math">\(\bar{R}^2 \equiv 1 - (1 - R^2)\frac{n-1}{n-p-1}\)</span>, where <span class="math">\(\bar{R}^2\)</span> is the adjusted <span class="math">\(R^2\)</span>. As such, <span class="math">\(\bar{R}^2 \le R^2\)</span>. Note that the square term in <span class="math">\(\bar{R}^2\)</span> has no significance except to note its relationship to <span class="math">\(R^2\)</span>, so negative values are possible.</p>
+<div id="example-1" class="section level2">
+<h2>Example</h2>
+Let us now add the adjusted <span class="math">\(R^2\)</span> measure to our previous example.<br />
+<hr>
+<pre class="r"><code>adj.r2 &lt;- c(summary(fit1)$adj.r.squared,
+            summary(fit2)$adj.r.squared,
+            summary(fit3)$adj.r.squared,
+            summary(fit4)$adj.r.squared,
+            summary(fit5)$adj.r.squared)
+
+
+results &lt;- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2,
+                      adj.r.squared = adj.r2)
+
+pander(results, caption = &quot;__True relationship is y = x1 + ɛ.__ &lt;br&gt; Predictors x2-x5 are unrelated random noise.&quot;)</code></pre>
+<table>
+<caption><strong>True relationship is y = x1 + ɛ.</strong> <br> Predictors x2-x5 are unrelated random noise.</caption>
+<colgroup>
+<col width="41%" />
+<col width="8%" />
+<col width="16%" />
+<col width="20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">models</th>
+<th align="center">rss</th>
+<th align="center">r.squared</th>
+<th align="center">adj.r.squared</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">y ~ x1 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">110</td>
+<td align="center">0.5192</td>
+<td align="center">0.5143</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.7</td>
+<td align="center">0.5384</td>
+<td align="center">0.5289</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.4</td>
+<td align="center">0.5397</td>
+<td align="center">0.5253</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + x3 + x4 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.9</td>
+<td align="center">0.5419</td>
+<td align="center">0.5226</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + x4 + x5 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.7</td>
+<td align="center">0.5427</td>
+<td align="center">0.5183</td>
+</tr>
+</tbody>
+</table>
+<strong>N.B.</strong> While <span class="math">\(\bar{R}\)</span> is not a <em>perfect</em> correction, it is based on rigorous mathematics. For instance the work of <a href="http://en.wikipedia.org/wiki/Ronald_Fisher">Ronald Fisher</a> and his contemporaries (e.g. <a href="http://en.wikipedia.org/wiki/John_Wishart_%28statistician%29">John Wishart</a>) shows that for samples drawn a normal distribution with <span class="math">\(\rho_{x_i,x_j} = 0\)</span>, <span class="math">\(R^2\)</span> is distributed according to the <span class="math">\(F\)</span>-distribution with <span class="math">\(\mathbb{E}[R^2] = \frac{p}{n-1}\)</span>. See <strong>Crocker</strong> or <strong>Wishart</strong> for details on the distribution of <span class="math">\(R^2\)</span> and <strong>Wherry</strong> for the original derivation.
+<hr>
+</div>
+</div>
+<div id="r_pred2" class="section level1">
+<h1><span class="math">\(R_{pred}^2\)</span></h1>
+<div id="from-rss-to-press" class="section level2">
+<h2>From RSS to PRESS</h2>
+<p>Both <span class="math">\(R^2\)</span> and <span class="math">\(\bar{R}^2\)</span> are related to the residual sum of squares, <span class="math">\(RSS = \sum_i^n (y_i - \hat{y})\)</span>. The RSS is a measure of the errors <span class="math">\(e_i = \hat{y_i} - y_{i,obs}\)</span>, where <span class="math">\(y_{i, obs}\)</span> is in the training set. In 1971 David Allen proposed the prediction sum of squares (PRESS) which is an equivalent measure that replaces <span class="math">\(e_i\)</span> with <span class="math">\(e_{(i)}\)</span> where <span class="math">\(e_{(i)} = \hat{y_i} - y_{i,obs}\)</span> when <span class="math">\(y_{i,obs}\)</span> is held out of the training set. In the general case this means building <em>n</em> models and obtaining only one <span class="math">\(e_{(i)}\)</span> for each run. This is equivalent to Leave-One-Out Cross validation. <br><br> Fortunately there is some serendipity in the maths that makes this tractable the case of linear regression. Namely, it can be shown that <span class="math">\(e_{(i)} = \frac{e_i}{1 - h_{i,i}}\)</span> where <span class="math">\(h_{i,i}\)</span> is the diagonal of the <strong>“hat”</strong> matrix: <span class="math">\(H = X(X^TX)^{-1}X^T\)</span>. Here, as in the rest of this note, <span class="math">\(X\)</span> is a <span class="math">\(n\)</span> by <span class="math">\(p\)</span> <a href="http://en.wikipedia.org/wiki/Design_matrix">design matrix</a>. The hat matrix is so called because it puts the hat on <span class="math">\(y\)</span>, i.e. <span class="math">\(\hat{y} = Hy\)</span>. Since matrix algebra is the workhorse of most linear regression routines, <span class="math">\(e_{(i)}\)</span> can be obtained without much extra computation. Finally, <span class="math">\(PRESS = \sum_i^n (e_{(i)})^2\)</span>. <br><br></p>
+</div>
+<div id="from-press-to-r_pred2" class="section level2">
+<h2>From PRESS to <span class="math">\(R_{pred}^2\)</span></h2>
+<p>Recall, <span class="math">\(R^2 = 1 - \frac{RSS}{\sum_i^n(y_i - \bar{y})^2}\)</span>. Likewise <span class="math">\(R_{pred}^2 = 1 - \frac{PRESS}{\sum_i^n(y_i - \bar{y})^2}\)</span>. <span class="math">\(R_{pred}^2\)</span> works against the ratchet because as <span class="math">\(p\)</span> increases (↑), the ability of the model to generalize to unseen data decreases (↓).</p>
+</div>
+<div id="example-2" class="section level2">
+<h2>Example</h2>
+<p>Finally, let us now add the <span class="math">\(R_{pred}^2\)</span> measure to our previous example.</p>
+<hr>
+<pre class="r"><code>PRESS &lt;- c(sum((residuals(fit1)/(1-lm.influence(fit1)$hat))^2),
+           sum((residuals(fit2)/(1-lm.influence(fit2)$hat))^2),
+           sum((residuals(fit3)/(1-lm.influence(fit3)$hat))^2),
+           sum((residuals(fit4)/(1-lm.influence(fit4)$hat))^2),
+           sum((residuals(fit5)/(1-lm.influence(fit5)$hat))^2))
+
+TSS &lt;- c(sum(anova(fit1)$`Sum Sq`),
+         sum(anova(fit2)$`Sum Sq`),
+         sum(anova(fit3)$`Sum Sq`),
+         sum(anova(fit4)$`Sum Sq`),
+         sum(anova(fit5)$`Sum Sq`))
+
+pred.r2 &lt;- 1 - (PRESS / TSS);
+
+results &lt;- data.frame(models = models,
+                      rss = rss,
+                      r.squared = r2,
+                      adj.r.squared = adj.r2,
+                      pred.r.squared = pred.r2)
+
+pander(results, caption = &quot;__True relationship is y = x1 + ɛ.__ &lt;br&gt; Predictors x2-x5 are unrelated random noise.&quot;)</code></pre>
+<table>
+<caption><strong>True relationship is y = x1 + ɛ.</strong> <br> Predictors x2-x5 are unrelated random noise.</caption>
+<colgroup>
+<col width="37%" />
+<col width="7%" />
+<col width="15%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">models</th>
+<th align="center">rss</th>
+<th align="center">r.squared</th>
+<th align="center">adj.r.squared</th>
+<th align="center">pred.r.squared</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">y ~ x1 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">110</td>
+<td align="center">0.5192</td>
+<td align="center">0.5143</td>
+<td align="center">0.5</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.7</td>
+<td align="center">0.5384</td>
+<td align="center">0.5289</td>
+<td align="center">0.5115</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">105.4</td>
+<td align="center">0.5397</td>
+<td align="center">0.5253</td>
+<td align="center">0.5024</td>
+</tr>
+<tr class="even">
+<td align="center">y ~ x1 + x2 + x3 + x4 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.9</td>
+<td align="center">0.5419</td>
+<td align="center">0.5226</td>
+<td align="center">0.4936</td>
+</tr>
+<tr class="odd">
+<td align="center">y ~ x1 + x2 + x3 + x4 + x5 + <span class="math">\(\epsilon\)</span></td>
+<td align="center">104.7</td>
+<td align="center">0.5427</td>
+<td align="center">0.5183</td>
+<td align="center">0.4861</td>
+</tr>
+</tbody>
+</table>
+<p><em>N.B.</em> As hoped, <span class="math">\(R_{pred}^2\)</span> decreases when we add pure noise predictors, although this is not a strict rule, since <span class="math">\(R_{pred}^2\)</span>, unlike <span class="math">\(R^2\)</span> and <span class="math">\(\bar{R}^2\)</span> is not a monotonic function of RSS.</p>
+<hr>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<ul>
+<li><p>D. Allen A., “The prediction sum of squares as a criterion for selecting predictor variables.,” University of Kentucky, Department of Statistics, 23, 1971.</p></li>
+<li><p>D. C. Crocker, “Some Interpretations of the Multiple Correlation Coefficient,” The American Statistician, vol. 26, no. 2, p. 31, Apr. 1972</p></li>
+<li><p>P. Yin and X. Fan, “Estimating R 2 shrinkage in multiple regression: a comparison of different analytical methods,” The Journal of Experimental Education, vol. 69, no. 2, pp. 203–224, 2001.</p></li>
+<li><p>R. J. Wherry, “A New Formula for Predicting the Shrinkage of the Coefficient of Multiple Correlation,” The Annals of Mathematical Statistics, vol. 2, no. 4, pp. pp. 440–457, 1931.</p></li>
+<li><p>J. Wishart, “The Mean and Second Moment Coefficient of the Multiple Correlation Coefficient, in Samples from a Normal Population,” Biometrika, vol. 22, no. 3/4, p. 353, May 1931.</p></li>
+</ul>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="reproducibility-information" class="section level2">
+<h2>Reproducibility Information</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<p>R version 3.1.2 (2014-10-31) Platform: x86_64-apple-darwin13.4.0 (64-bit)</p>
+<p>locale: [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</p>
+<p>attached base packages: [1] stats graphics grDevices utils datasets methods base</p>
+<p>other attached packages: [1] pander_0.5.1 knitr_1.8</p>
+<p>loaded via a namespace (and not attached): [1] digest_0.6.4 evaluate_0.5.5 formatR_1.0 htmltools_0.2.6 [5] Rcpp_0.11.3 rmarkdown_0.3.10 stringr_0.6.2 tools_3.1.2<br />[9] yaml_2.1.13</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

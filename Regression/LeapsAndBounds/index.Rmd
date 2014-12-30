@@ -1,0 +1,185 @@
+---
+title: "Vignette: Leaps and Bounds"
+author: ''
+date: ''
+output:
+  html_document:
+    fig_width: 10
+    keep_md: yes
+    self_contained: no
+    theme: spacelab
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" />
+<link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" />
+<link type="text/css" rel="stylesheet" href="css/style.css"
+<head> <div id="tableofcontents"></div> </head>
+<div id="source" class="tocify"> 
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li></ul>
+</div>
+__Kevin M. Smith // Environmental Statistics // Fall 2014__
+
+```{r, message = FALSE, echo = FALSE, dev = 'png'}
+# Load Required Libraries
+require(ggplot2)
+require(plyr)
+require(pander)
+
+```
+
+<hr>
+# Overview
+The intention of this note is to demonstrate exhaustive subset regression using the $leaps$ package available in the _R_ programming language. _Leaps_ is a homage to the title of the 1974 paper _Regressions by Leaps and Bounds_ by __Furnival and Wilson__. In their manuscript Furnival and Wilson demonstrate how __branch and bound__ techniques common to integer programming can be re-purposed to provide a computationally tractable method of finding the globally optimal model (in terms of minimized RSS) for a given subset size $d$ of $p$ total predictors. I have written about the branch and bound method for best subsets regressions in another vignette, available [here](http://kevin-m-smith.github.io/CEE202/Regression/BranchAndBound/). 
+<hr>
+
+# Data Manipulation
+## Reading in The Data Set
+```{r}
+data <- read.csv("data/hydro.csv", header = TRUE)
+pander(head(data))
+```
+ 
+## Seperating Observations and Predictors
+```{r, results = 'asis'}
+y <- as.vector(unlist(data["Q710"]))
+exclude <- names(data) %in% c("Site", "State", "Q710") 
+x <- data[!exclude]
+```
+
+## Augmenting the Observations with Transforms
+```{r}
+square <- function(x){ x * x }
+
+Log <- adply(x, 1, log)
+colnames(Log) <- paste("Log", names(Log), sep = "")
+Sq <- adply(x, 1, square)
+colnames(Sq) <- paste("Sq", names(Sq), sep = "")
+
+x <- data.frame(x, Log, Sq) 
+```
+
+# A Hop, Skip, and a Leap
+
+## Load the Leaps Package
+```{r, warning = FALSE, message = FALSE}
+require(leaps)
+```
+
+## Exhaustive Search
+```{r}
+best <- leaps(x = x, y = y, nbest = 10, method = "adjr2")
+```
+
+That's it. Sit back and let the 30-year-old FORTRAN libraries do the rest.
+
+# Graphical Presentation
+
+## Adjusted $R^2$ vs. $d$
+```{r}
+results <- data.frame(number.of.predictors = best$size,
+                      adjusted.r2 = best$adjr2)
+
+ggplot(results, aes( x = number.of.predictors, y = adjusted.r2)) + 
+  geom_point() +
+  ggtitle("Saturation of Adjusted R-squared with Increasing d") +
+  ylab("Adjusted R-squared") + 
+  xlab("Number of Predictors (d)")
+```
+
+## $\Delta$ Adjusted $R^2$ vs. $d$
+```{r}
+best <- leaps(x = x, y = y, nbest = 1, method = "adjr2")
+
+results <- data.frame(number.of.predictors = best$size[2:30],
+                      marginal.change.r2 = diff(best$adjr2))
+
+ggplot(results, aes( x = number.of.predictors, y = marginal.change.r2)) + 
+  geom_point() + 
+  ylab("Marginal Improvement in Adjusted R-squared") + 
+  xlab("Number of Predictors") +
+  geom_vline(x = 6.5, color = "red", alpha = 0.5) + 
+  geom_text(label = "6 Predictors", x = 8.5, y = 0.15, color = "red", alpha = 0.7)
+
+```
+
+## Mallow's $C_p$ vs. $d$
+```{r}
+best <- leaps(x = x, y = y, nbest = 1, method = "Cp")
+
+results <- data.frame(number.of.predictors = best$size[2:30],
+                      Cp = best$Cp[2:30])
+
+ggplot(results, aes( x = number.of.predictors, y = Cp)) + 
+  geom_point() + 
+  ylab("Mallow's Cp") + 
+  xlab("Number of Predictors") +
+  geom_vline(x = 6.5, color = "red", alpha = 0.5) + 
+  geom_text(label = "6 Predictors", x = 8.5, y = 50, color = "red", alpha = 0.7)
+```
+
+# Final Selection
+
+## Subsetting
+Now that we have identified that $d = 6$ as the appropriate sub-setting level, we have to subset the results by $d = 6$, and finally by adjusted $R^2$. 
+
+```{r, results='asis'}
+best <- leaps(x = x, y = y, nbest = 10, method = "adjr2")
+
+results <- data.frame(number.of.predictors = best$size,
+                      adjusted.r2 = best$adjr2)
+
+sub.results <- subset(results, (number.of.predictors == 6))
+sub.results <- subset(sub.results, adjusted.r2 == max(adjusted.r2))
+
+columns <- best$which[as.numeric(rownames(sub.results)),]
+
+pander(colnames(x)[columns])
+```
+
+## Final Regression
+Now we perform the final regression with the model identified in the previous step. 
+
+```{r}
+x. = as.matrix(x[,columns]) 
+fit <- lm(y~x.)
+
+```
+
+### Summary
+```{r}
+pander(summary(fit))
+```
+
+### Prediction Plot
+```{r, fig.width = 8, fig.height = 8, warning = FALSE}
+qplot(x = fit$fitted.values, y = y) +
+  xlim(0, 120) + ylim(0, 120) + 
+  geom_abline(color = "red", size = 2, alpha = 0.4) +
+  xlab("Predicted") + ylab("Observed") + 
+  ggtitle("Observed vs. Predicted")
+
+```
+
+<hr>
+# Appendix
+
+## References
+> G. M. Furnival and R. W. Wilson, “Regressions by Leaps and Bounds,” Technometrics, vol. 16, no. 4, pp. 499–511, Nov. 1974.
+
+## Reproducibility Information
+```{r}
+pander(sessionInfo())
+```

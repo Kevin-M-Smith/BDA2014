@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Vignette: Regression Frontier</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Vignette: Regression Frontier</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#the-mystery-data">The Mystery Data</a></li>
+</ul></li>
+<li><a href="#contour-plots">Contour Plots</a><ul>
+<li><a href="#r_pred2"><span class="math">\(R_{pred}^2\)</span></a></li>
+<li><a href="#normality-of-loo-residuals">Normality of LOO Residuals</a></li>
+</ul></li>
+<li><a href="#pareto-selection">Pareto Selection</a></li>
+<li><a href="#curve-fitting">Curve Fitting</a></li>
+<li><a href="#appendix">Appendix</a><ul>
+<li><a href="#reproducibility-information">Reproducibility Information</a></li>
+</ul></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<strong>Kevin M. Smith // Big Data Analytics // Fall 2014</strong>
+<hr>
+<hr>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+The purpose of this short note is to explore the <a href="http://en.wikipedia.org/wiki/Pareto_efficiency#Pareto_frontier">Pareto frontier</a> when there are multiple objectives. In this case the trade-offs are between <span class="math">\(R_{pred}^2\)</span> and the apparent normality of the leave-one-out residuals via the p-value of the <a href="http://en.wikipedia.org/wiki/Anderson–Darling_test">Anderson Darling test statistic</a>.
+<hr>
+<div id="the-mystery-data" class="section level2">
+<h2>The Mystery Data</h2>
+<p>This note uses data of unknown origin, but that is clearly non-linear in it’s untransformed state. In the following section a range of power transforms will be applied on <span class="math">\(x\)</span> and <span class="math">\(y\)</span> before fitting linear regressions of the form <span class="math">\((y_{transformed} = \beta x_{transformed} + \epsilon)\)</span>. <br><br></p>
+<pre class="r"><code># Load in Data
+mystery &lt;- read.csv(&quot;data/mystery.csv&quot;, header=FALSE)
+
+colnames(mystery) &lt;- c(&quot;y&quot;, &quot;x&quot;)
+
+yyy &lt;- unlist(mystery[1])
+xxx &lt;- unlist(mystery[2])
+
+qplot(x = xxx, y = yyy) + xlab(&quot;x&quot;) + ylab(&quot;y&quot;) +
+  ggtitle(&quot;Simple Scatterplot of the Untransformed Data&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-2-1.png" /></p>
+<blockquote>
+<p><strong>See this <a href="http://kevin-m-smith.github.io/CEE202/Regression/BulgingDiagram/">vignette on Tukey’s bulging rule</a> or use <a href="http://kevin-m-smith.github.io/CEE202/Regression/SimpleTransformTool/">this interactive transform tool</a> to get a better sense of the transformations that will be performed.</strong></p>
+</blockquote>
+<br>
+<hr>
+</div>
+</div>
+<div id="contour-plots" class="section level1">
+<h1>Contour Plots</h1>
+<p><br></p>
+<div id="r_pred2" class="section level2">
+<h2><span class="math">\(R_{pred}^2\)</span></h2>
+<p>After running many regressions on variables subject to power transforms in the search space <span class="math">\(t \in [-3, 3]\)</span>, a locally optimal region of the <span class="math">\(R_{pred}^2\)</span> can be identified between <span class="math">\(t_x \in [-1.5, -2.7]\)</span> and <span class="math">\(t_y \in [1.7, 2.4]\)</span>, where <span class="math">\(t_x\)</span> and <span class="math">\(t_y\)</span> are the power transforms on <span class="math">\(x\)</span> and <span class="math">\(y\)</span> respectively.</p>
+<pre class="r"><code>levelplot(pred.r2~px+py, data = results, contour = TRUE, panel=function(...) {
+  arg &lt;- list(...)
+  panel.levelplot(...)},
+  col.regions=colorRampPalette(brewer.pal(9,&quot;Blues&quot;)[1:8]),
+  xlab = &quot;Power Transform on X&quot;,
+  ylab = list(&quot;Power Transform on Y&quot;, rot=90),
+  main = &quot;Prediction R Squared&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" /></p>
+</div>
+<div id="normality-of-loo-residuals" class="section level2">
+<h2>Normality of LOO Residuals</h2>
+<p>Here the p-value of the Anderson-Darling test statistic is used as a surrogate measure for the apparent normality of the leave-one-out (loo) residuals. At first blush this may seem like a blatant abuse of the test statistic and a malignant use of a p-value. While I would concede the point if pushed on it, I think the apparent continuity in the search space <span class="math">\(t \in [-3, 3]\)</span> suggests that the p-value can innocently (i.e. soundly) assist in the identification of regions where the loo residuals <em>appear</em> normal. In either case, the resulting contour plot is shown below.</p>
+<pre class="r"><code>levelplot(pred.ad~px+py, data = results, contour = TRUE, panel=function(...) {
+  arg &lt;- list(...)
+  panel.levelplot(...)},
+  col.regions=colorRampPalette(brewer.pal(9,&quot;Blues&quot;)[1:8]),
+  xlab = &quot;Power Transform on X&quot;,
+  ylab = list(&quot;Power Transform on Y&quot;, rot=90),
+  main = &quot;P-Value of Anderson Darling Test Statistic on LOO Residuals&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" /></p>
+</div>
+</div>
+<div id="pareto-selection" class="section level1">
+<h1>Pareto Selection</h1>
+<p>The points on the Pareto frontier of <span class="math">\(R_{pred}^2\)</span> vs. the Anderson Darling p-value is shown for the upper-right-hand corner of the solution space.</p>
+<pre class="r"><code>g &lt;- ggplot(results, aes(x = pred.ad, y = pred.r2)) + geom_point() + theme_bw()
+g &lt;- g + xlim(0.75, 1) + ylim(0.75, 1)
+
+top.sorted &lt;- arrange(results, pred.ad, pred.r2, decreasing = TRUE)
+pareto.points = top.sorted[which(!duplicated(cummax(top.sorted$pred.r2))), ] 
+g &lt;- g + annotate(&quot;point&quot;, x=pareto.points$pred.ad, 
+                  y=pareto.points$pred.r2, colour = &quot;#e51843&quot;, size = 6)
+g &lt;- g + ggtitle(&quot;Prediction R-squared vs. Anderson-Darling P-value on \n Leave-One-Out Residuals with Pareto Frontier Highlighted&quot;)
+g &lt;- g + xlab(&quot;Anderson-Darling P-value on Leave-One-Out Residuals&quot;)
+g &lt;- g + ylab(&quot;Prediction R-squared on Leave-One-Out Residuals&quot;)
+g</code></pre>
+<pre><code>## Warning: Removed 9977 rows containing missing values (geom_point).</code></pre>
+<pre><code>## Warning: Removed 17 rows containing missing values (geom_point).</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-6-1.png" /></p>
+</div>
+<div id="curve-fitting" class="section level1">
+<h1>Curve Fitting</h1>
+<p>The optimal transform is chosen according to the preferences assigned to the particular objectives. Choosing, for the sake of example, an arbitrary point from the Pareto frontier, yields the following curve in real-space.</p>
+<pre class="r"><code>best &lt;- subset(pareto.points, pred.ad &gt; 0.75 &amp; pred.ad &lt; 0.78)
+
+best.transform &lt;- data.frame( y = yyy^best$py, x = xxx^best$px)
+best.lm &lt;- lm(y~x, data = best.transform)
+
+b0 &lt;- coef(best.lm)[1]
+b1 &lt;- coef(best.lm)[2]
+
+fit.curve &lt;- function(x){
+  (b1*(x^best$px) + b0)^(1/best$py)
+}
+
+g &lt;- ggplot() + ggtitle(&quot;Curve Fit&quot;)
+g &lt;- g + xlab(&quot;x&quot;)
+g &lt;- g + ylab(&quot;y&quot;)
+g &lt;- g + stat_function(aes(x = xxx), fun = fit.curve, 
+                       colour = &quot;red&quot;, lwd = 2, alpha = 0.5)
+g &lt;- g + geom_point(aes(x = xxx, y = yyy))
+g</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" /></p>
+<p>The selected power transformations on <span class="math">\(x\)</span> and <span class="math">\(y\)</span> are:</p>
+<pre class="r"><code>power.transforms &lt;- data.frame(power.of.y = best$py,
+                               power.of.x = best$px)
+
+pander(power.transforms, caption = &quot;&quot;)</code></pre>
+<table>
+<colgroup>
+<col width="18%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">power.of.y</th>
+<th align="center">power.of.x</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1.364</td>
+<td align="center">-1.606</td>
+</tr>
+</tbody>
+</table>
+<br>
+<hr>
+<p>Finally, the model parameters and performance in the transformed space:</p>
+<pre class="r"><code>pander(summary(best.lm), caption = &quot;&quot;)</code></pre>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="15%" />
+<col width="18%" />
+<col width="13%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"> </th>
+<th align="center">Estimate</th>
+<th align="center">Std. Error</th>
+<th align="center">t value</th>
+<th align="center">Pr(&gt;|t|)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><strong>x</strong></td>
+<td align="center">0.147</td>
+<td align="center">0.006372</td>
+<td align="center">23.06</td>
+<td align="center">6.639e-17</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>(Intercept)</strong></td>
+<td align="center">15.74</td>
+<td align="center">1.955</td>
+<td align="center">8.048</td>
+<td align="center">5.348e-08</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="30%" />
+<col width="11%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Observations</th>
+<th align="center">Residual Std. Error</th>
+<th align="center"><span class="math">\(R^2\)</span></th>
+<th align="center">Adjusted <span class="math">\(R^2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">24</td>
+<td align="center">8.755</td>
+<td align="center">0.9603</td>
+<td align="center">0.9585</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>final.set &lt;- data.frame(observations = yyy,
+                        predictions = fit.curve(xxx))
+
+g &lt;- ggplot(final.set, 
+            aes(x = predictions, y = observations)) 
+g &lt;- g + xlim(0, 45) + ylim(0, 45) + geom_abline(color = &quot;blue&quot;)
+g + geom_jitter()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" /></p>
+<hr>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="reproducibility-information" class="section level2">
+<h2>Reproducibility Information</h2>
+<pre class="r"><code>pander(sessionInfo())</code></pre>
+<p><strong>R version 3.1.2 (2014-10-31)</strong></p>
+<p><strong>Platform:</strong> x86_64-apple-darwin13.4.0 (64-bit)</p>
+<p><strong>locale:</strong></p>
+<p><strong>attached base packages:</strong> [1] “<em>parallel</em>, <em>stats</em>, <em>graphics</em>, <em>grDevices</em>, <em>utils</em>, <em>datasets</em>, <em>methods</em> and <em>base</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>other attached packages:</strong> [1] “<em>pander(v.0.5.1)</em>, <em>doMC(v.1.3.3)</em>, <em>iterators(v.1.0.7)</em>, <em>foreach(v.1.4.2)</em>, <em>RColorBrewer(v.1.1-2)</em>, <em>lattice(v.0.20-29)</em>, <em>plyr(v.1.8.1)</em>, <em>nortest(v.1.0-2)</em> and <em>ggplot2(v.1.0.0)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+<p><strong>loaded via a namespace (and not attached):</strong> [1] “<em>codetools(v.0.2-9)</em>, <em>colorspace(v.1.2-4)</em>, <em>digest(v.0.6.4)</em>, <em>evaluate(v.0.5.5)</em>, <em>formatR(v.1.0)</em>, <em>grid(v.3.1.2)</em>, <em>gtable(v.0.1.2)</em>, <em>htmltools(v.0.2.6)</em>, <em>knitr(v.1.8)</em>, <em>labeling(v.0.3)</em>, <em>MASS(v.7.3-35)</em>, <em>munsell(v.0.4.2)</em>, <em>proto(v.0.3-10)</em>, <em>Rcpp(v.0.11.3)</em>, <em>reshape2(v.1.4)</em>, <em>rmarkdown(v.0.3.10)</em>, <em>scales(v.0.2.4)</em>, <em>stringr(v.0.6.2)</em>, <em>tools(v.3.1.2)</em> and <em>yaml(v.2.1.13)</em>” attr(,“class”) [1] “knit_asis” attr(,“knit_cacheable”) [1] TRUE</p>
+</div>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
