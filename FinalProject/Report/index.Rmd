@@ -4,11 +4,11 @@ title: '<strong>Big Data: </strong><br> Life on the New Frontier of Environmenta
 author: ''
 date: "Kevin Smith | Big Data Analytics | Fall 2014"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     self_contained: no
     theme: readable
-    toc: yes
-  pdf_document:
     toc: yes
 ---
 
@@ -16,7 +16,7 @@ output:
 ## Abstract
 In preparation for the era of "Big Data" it is imperative that we reflect on our current abilities to carry out computational research in a reproducible way, otherwise we risk our ambitions outpacing our comprehension. Dynamic Documents and Literate Programming can be combined to promote reproducible research and enhanced course material that promotes both topical (e.g. hydrologic) and programming literacy. Such techniques are likely only to grow in importance as the face of academic publishing changes from formal manuscripts to multimedia interactive grey literature. Finally, a gallery of examples is provided via embedded hyperlinks. 
 
-_N.B._ If you are having trouble opening the links in the PDF version of this report, the web version of this report is available at the following address: http://kevin-m-smith.github.io/BDA2014/FinalProject/Report
+__N.B.__ If you are having trouble opening the links in the PDF version of this report, the web version of this report is available at the following address: http://kevin-m-smith.github.io/BDA2014/FinalProject/Report
 
 ## The Windfalls and Pitfalls of The New Frontier
 In many ways, the environmental engineering laboratory of today is markedly different from those of ten and twenty years ago. There are, of course, the familiar relics - like fiberglass flumes, scale models, stir plates and glassware. However, for many of us today, the greater part of our efforts consists solely of pushing around ones and zeros. We've traded the tedium of punch cards for the convenience of laptops; gone are the days of hand drawn plots on semi-log paper. Tables of approximations and significance values are all but forgotten.
@@ -54,7 +54,7 @@ Today most researchers use off-the-shelf models and statistical packages that co
 Of course, there are some trade-offs. By not forcing the user to program each routine by hand, under-the-hood programming errors are greatly reduced. This comes with increased risk of unintentional misuse. Since the reasoning of the algorithm selected is not as clear, it is much harder to tell if we have selected the right tool for the job.
 
 ### The Case for Open Source Software
-One elegant way to move-the-knee of this trade-off frontier is to use open source software, such as _R_. The _R_ statistical programming environment includes pre-built software packages, but allows the user to view and alter the source code as appropriate. Such modification is not possible with popular commerical packages such as MatLab, Minitab, Macsyma, Mathematica, SPSS, SAS, or S-plus. When these software packages give different results, there is no way to determine the source of the disagreement. See [Fateman's 1993](#Fateman) review of Mathematica.  Furthermore, [de Leeuw](#Leeuw) argues that publishing results that rely on these prorprietary packages violates the ideals of scientific reproducibility. 
+One elegant way to move-the-knee of this trade-off frontier is to use open source software, such as _R_. The _R_ statistical programming environment includes pre-built software packages, but allows the user to view and alter the source code as appropriate. Such modification is not possible with popular commercial packages such as MatLab, Minitab, Macsyma, Mathematica, SPSS, SAS, or S-plus. When these software packages give different results, there is no way to determine the source of the disagreement. See [Fateman's 1993](#Fateman) review of Mathematica.  Furthermore, [de Leeuw](#Leeuw) argues that publishing results that rely on these proprietary packages violates the ideals of scientific reproducibility. 
 
 ### Programming Literacy Through Literate Programming
 With the source of the software exposed, it is much easier to promote programming literacy. Specifically, one of the most successful approaches is "literate programming", originally coined in [Knuth 1992](#Knuth), and developed subsequently by others (e.g. [Ramsey 1994](#Ramsey)). Literate programming allows natural languages and programming languages to be interleaved in a way that the code runs in place, and the results may appear among the natural language. It also allows the user to "follow along at home" by using and modifying the code. 
@@ -91,7 +91,7 @@ plot(X, Y)
 Dynamic Documents are a means of packaging the data, analysis, code, outputs, and computational environment together in such a way that the the entire unmodified document can be re-run, and the same results obtained. Dynamic Documents eliminate the need for __copy and paste__ to produce publishable materials, minimizing transposition errors. They also greatly improve the lifespan of research products, since they can be reproduced easily at a later date. Furthermore since the justification for the methods used is provided inline with the code, it encourages peer-review, which is generally a daunting task for computational experiments. See [Sawitzki 1999](#Sawitzki) and [Gentleman and Lang 2007](#Gentleman).
 
 ### The Web & Grey Literature
-The Internet and the World Wide Web have dratmatically changed the modes available to those seeking an audience or peer review for their work. [Banks 2006](#Banks) predicts the eventual 'collapse' of any distinction between formal literature, and so-called 'grey' literature which is published through non-traditional channels, such as blogs. Traditionally only formal peer reviewed publications have been taken to be sound references. However, in light of _Claerbout's Principle_, which suggests that manuscripts are merely an _advertisement_ of scholarship, not the sholarship _in the flesh_, web-based grey literature may be of more value. This is because the space and formatting limitations of traditional documents do not exist on the web. See [Stodden 2010](#Stodden).
+The Internet and the World Wide Web have dramatically changed the modes available to those seeking an audience or peer review for their work. [Banks 2006](#Banks) predicts the eventual 'collapse' of any distinction between formal literature, and so-called 'grey' literature which is published through non-traditional channels, such as blogs. Traditionally only formal peer reviewed publications have been taken to be sound references. However, in light of _Claerbout's Principle_, which suggests that manuscripts are merely an _advertisement_ of scholarship, not the scholarship _in the flesh_, web-based grey literature may be of more value. This is because the space and formatting limitations of traditional documents do not exist on the web. See [Stodden 2010](#Stodden).
 
 <hr>
 ## Conclusion: Bringing It All Together
@@ -125,7 +125,7 @@ The following is a selection of examples of Dynamic Documents and Literate Progr
 ### Tutorials
  * Bayesian
      * [Occam's Razor in Model Selection](http://kevin-m-smith.github.io/BDA2014/Bayesian/OccamsRazor/)
- * Time Series Analsyis
+ * Time Series Analysis
      * [ARIMA Models](http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis/)
 
 
