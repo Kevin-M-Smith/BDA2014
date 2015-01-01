@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>On the Geometric Mean</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link href="index_files/bootstrap-2.3.2/css/spacelab.min.css" rel="stylesheet" />
+<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">On the Geometric Mean</h1>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#getting-started">Getting Started</a></li>
+</ul></li>
+<li><a href="#estimator-efficiency">Estimator Efficiency</a><ul>
+<li><a href="#monte-carlo-setup">Monte Carlo Setup</a></li>
+<li><a href="#setting-up-the-monte-carlo-simulator">Setting up the Monte Carlo Simulator</a></li>
+<li><a href="#setting-up-the-experimental-classes">Setting Up the Experimental Classes</a></li>
+<li><a href="#running-the-simulations">Running the Simulations</a></li>
+<li><a href="#reproducing-figure-6.6">Reproducing Figure 6.6</a><ul>
+<li><a href="#defining-a-plotting-function">Defining A Plotting Function</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#regulatory-games">Regulatory Games</a></li>
+</ul>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/jquery.fancybox-1.3.4.pack.min.js"></script>
+<script type="text/javascript" src="js/jquery.tocify.js"></script>
+<script type="text/javascript" src="js/jquery.scianimator.min.js"></script>
+<script type="text/javascript" src="js/page.js"></script>
+<script>  </script>
+<link type="text/css" rel="stylesheet" href="css/jquery.tocify.css" /> <link type="text/css" rel="stylesheet" media="screen" href="css/jquery.fancybox-1.3.4.css" /> <link type="text/css" rel="stylesheet" href="css/style.css"
+<head>
+<div id="tableofcontents">
+
+</div>
+</head>
+<div id="source" class="tocify">
+<ul class="tocify-header nav nav-list">
+<li class="tocify-item active" style="cursor: pointer;">
+<a onclick='toggle_R();' >Show / Hide Source</a>
+</li>
+</ul>
+</div>
+<p><strong>CEE 202 | Project 1 | Kevin Smith</strong></p>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<div id="getting-started" class="section level2">
+<h2>Getting Started</h2>
+<div id="required-libraries" class="section level4">
+<h4>Required Libraries</h4>
+<pre class="r"><code>require(plyr)
+require(ggplot2)
+require(gridExtra)
+require(reshape2)
+require(doMC)</code></pre>
+</div>
+<div id="setup-parallel-processing" class="section level4">
+<h4>Setup Parallel Processing</h4>
+<pre class="r"><code>registerDoMC(cores = 4)</code></pre>
+</div>
+</div>
+</div>
+<div id="estimator-efficiency" class="section level1">
+<h1>Estimator Efficiency</h1>
+<div id="monte-carlo-setup" class="section level3">
+<h3>Monte Carlo Setup</h3>
+<div id="geometric-mean" class="section level4">
+<h4>Geometric Mean</h4>
+<pre class="r"><code>gm &lt;- function(x) exp(mean(log(x)))</code></pre>
+</div>
+<div id="experiment-description" class="section level4">
+<h4>Experiment Description</h4>
+<pre class="r"><code>experiment &lt;- function(n, mu, sigma){
+  sample &lt;- rlnorm(n, mu, sigma)
+  m &lt;- mean(sample)
+  g &lt;- gm(sample)
+  d &lt;- median(sample)
+  result &lt;- data.frame(m = m, g = g, d = d)
+}</code></pre>
+</div>
+<div id="mean-squared-error-calculation" class="section level4">
+<h4>Mean Squared Error Calculation</h4>
+<pre class="r"><code>mse &lt;- function(x, X){
+  x &lt;- unlist(x)
+  se &lt;- (x - X)^2
+  return(mean(se))
+}</code></pre>
+</div>
+</div>
+<div id="setting-up-the-monte-carlo-simulator" class="section level2">
+<h2>Setting up the Monte Carlo Simulator</h2>
+<pre class="r"><code>monte.carlo &lt;- function(n.samples, mu, sigma){
+  M &lt;- exp(mu + sigma/2)
+  experimental.results &lt;- replicate(
+    n.experiments, 
+    experiment(n.samples, mu, sigma), 
+    simplify = &quot;data.frame&quot;)
+  
+  mean.squared.error &lt;- (adply(experimental.results, 1, mse, M))
+  t(data.frame(mean.squared.error, row.names = 1))
+}</code></pre>
+</div>
+<div id="setting-up-the-experimental-classes" class="section level2">
+<h2>Setting Up the Experimental Classes</h2>
+<pre class="r"><code>n.experiments = 10000;
+
+n.samples &lt;- c(3, 5, 7, 11, 19)
+mu &lt;- c(-10, -1, 0, 1, 10)
+sigma &lt;- seq(0.01, 2, length.out = 10) 
+
+experimental.classes &lt;- expand.grid(
+  mu = mu, 
+  sigma = sigma, 
+  n.samples = n.samples)</code></pre>
+</div>
+<div id="running-the-simulations" class="section level2">
+<h2>Running the Simulations</h2>
+<pre class="r"><code>set.seed(202)
+
+rmse.values &lt;- adply(experimental.classes, 1, mutate,
+                mse = monte.carlo(n.samples, mu, sigma),
+                eff = mse[,1] / mse, .parallel = TRUE)</code></pre>
+</div>
+<div id="reproducing-figure-6.6" class="section level2">
+<h2>Reproducing Figure 6.6</h2>
+<div id="defining-a-plotting-function" class="section level3">
+<h3>Defining A Plotting Function</h3>
+<pre class="r"><code>g.plotter &lt;- function(this.mu){
+  sub &lt;- subset(rmse.values, mu == this.mu &amp; sigma &lt; 1.2)
+  p &lt;- ggplot(sub, aes(x = sigma, y = eff[,2])) 
+  p &lt;- p + geom_rect( xmin = -10, xmax = 10, ymin = 1, ymax = 10, fill = &quot;grey20&quot;)
+  p &lt;- p + geom_rect( xmin = -10, xmax = 10, ymin = -10, ymax = 1, fill = &quot;grey40&quot;)
+  p &lt;- p + geom_line(aes(color = as.factor(n.samples)), size = 1.5)
+  p &lt;- p + geom_point(aes(color = as.factor(n.samples)), size = 4)
+  p &lt;- p + theme(legend.position = &quot;bottom&quot;)
+  p &lt;- p + labs(title = (paste(&quot;Relative Efficiency of the Sample Arithmetic Mean to the Sample Geometric Mean\n as Estimators of the Lognormal Population Mean \n Shown as a Function of Shape (σ) and Sample Size (n) \n Estimated from&quot;, n.experiments, &quot;Monte Carlo Simulations with Scale (μ) =&quot;, this.mu, &quot;\n&quot;)))
+  p &lt;- p + xlab(&quot;Shape (σ)&quot;) + ylab(&quot;Relative Efficiency (AM / GM)&quot;)
+  p &lt;- p + scale_colour_discrete(name = &quot;Sample Size&quot;)
+  p
+}</code></pre>
+<pre class="r"><code>g.plotter(0)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" /></p>
+<pre class="r"><code>legend &lt;- ggplot_gtable(ggplot_build(g.plotter(0)))
+index &lt;- which(sapply(legend$grobs, function(x) x$name) == &quot;guide-box&quot;)
+legend &lt;- legend$grobs[[index]]
+
+g.plotter2 &lt;- function(this.mu){ 
+  g.plotter(this.mu) + ggtitle(paste(&quot;μ = &quot;, this.mu)) +
+    theme(legend.position = &quot;none&quot;) + ylab(&quot;Relative Efficiency&quot;) + ylim(0,4)
+}
+
+p &lt;- arrangeGrob(arrangeGrob(
+  g.plotter2(-10), g.plotter2(-1), g.plotter2(1), g.plotter2(10), 
+  nrow = 2, ncol = 2, 
+  main = &quot;\n Relative Efficiency of the Estimators Appears Indepenent of μ&quot;), 
+  legend,
+  nrow = 2, heights = c(7.5,0.5))
+
+p</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-12-1.png" /></p>
+<pre class="r"><code>d.plotter &lt;- function(this.mu){
+  sub &lt;- subset(rmse.values, mu == this.mu &amp; sigma &lt; 1.2)
+  p &lt;- ggplot(sub, aes(x = sigma, y = eff[,3])) 
+  p &lt;- p + geom_rect( xmin = -10, xmax = 10, ymin = 1, ymax = 10, fill = &quot;grey20&quot;)
+  p &lt;- p + geom_rect( xmin = -10, xmax = 10, ymin = -10, ymax = 1, fill = &quot;grey40&quot;)
+  p &lt;- p + geom_line(aes(color = as.factor(n.samples)), size = 1.5)
+  p &lt;- p + geom_point(aes(color = as.factor(n.samples)), size = 4)
+  p &lt;- p + theme(legend.position = &quot;bottom&quot;)
+  p &lt;- p + labs(title = (paste(&quot;Relative Efficiency of the Sample Arithmetic Mean to the Sample Median\n as Estimators of the Lognormal Population Mean \n Shown as a Function of Shape (σ) and Sample Size (n) \n Estimated from&quot;, n.experiments, &quot;Monte Carlo Simulations with Scale (μ) =&quot;, this.mu, &quot;\n&quot;)))
+  p &lt;- p + xlab(&quot;Shape (σ)&quot;) + ylab(&quot;Relative Efficiency (AM / MED)&quot;)
+  p &lt;- p + scale_colour_discrete(name = &quot;Sample Size&quot;)
+  p
+}
+
+d.plotter2 &lt;- function(this.mu){ 
+  d.plotter(this.mu) + ggtitle(paste(&quot;μ = &quot;, this.mu)) +
+    theme(legend.position = &quot;none&quot;) + ylab(&quot;Relative Efficiency&quot;) + ylim(0,4)
+}</code></pre>
+<pre class="r"><code>d.plotter(0)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-14-1.png" /></p>
+<pre class="r"><code>p &lt;- arrangeGrob(arrangeGrob(
+  g.plotter2(-10), g.plotter2(-1), g.plotter2(1), g.plotter2(10), 
+  nrow = 2, ncol = 2, 
+  main = &quot;\n Relative Efficiency of the Estimators Appears Indepenent of μ&quot;), 
+  legend,
+  nrow = 2, heights = c(7.5,0.5))
+
+p</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-15-1.png" /></p>
+</div>
+</div>
+</div>
+<div id="regulatory-games" class="section level1">
+<h1>Regulatory Games</h1>
+<pre class="r"><code>TMDL = 33
+mu = log(60)
+sigma = 0.4
+n.samples = 1:32
+n.experiments = 10000
+
+experimental.classes &lt;- expand.grid(
+  mu = mu, 
+  sigma = sigma, 
+  n.samples = n.samples)
+
+experiment &lt;- function(n, mu, sigma){
+  gm(rlnorm(n, mu, sigma))
+}
+
+monte.carlo &lt;- function(n.samples, mu, sigma){
+  experimental.results &lt;- replicate(
+    n.experiments, 
+    experiment(n.samples, mu, sigma))
+  
+  return(mean(experimental.results))
+}
+
+set.seed(202)
+
+mean.gm.values &lt;- adply(experimental.classes, 1, mutate,
+                mean.gm = monte.carlo(n.samples, mu, sigma),
+                .parallel = TRUE)
+
+g &lt;- ggplot(mean.gm.values, aes(x = n.samples, y = mean.gm)) + geom_point()
+g &lt;- g + geom_smooth(level = 0)
+g &lt;- g + ggtitle(&quot;Expected Value of the Sample Geometric Mean is versus Sample Size, with LOESS&quot;)
+g &lt;- g + xlab(&quot;Sample Size&quot;) + ylab(&quot;E[g]&quot;)</code></pre>
+<pre class="r"><code>g1 &lt;- replicate(n.experiments, rlnorm(1, log(60),  0.4))
+g4 &lt;- replicate(n.experiments, gm(rlnorm(4, log(60), 0.4)))
+g32 &lt;- replicate(n.experiments, gm(rlnorm(32, log(60), 0.4)))
+
+sampling.data &lt;- data.frame(g1 = g1, g4 = g4, g32 = g32)
+
+lines &lt;- data.frame(type = &quot;means&quot;,
+                   values = c(mean(g1),
+                              mean(g4), 
+                              mean(g32)))
+
+base &lt;- ggplot(sampling.data) + theme_bw()
+base &lt;- base + xlim(0, 150) + ylim(0, 0.1)
+base &lt;- base + geom_vline(x = TMDL, size = 2)
+
+
+p1 &lt;- base + geom_density(aes(x = g1), 
+                       alpha = 0.2, fill = &quot;#F8766D&quot;) 
+#p1 &lt;- p1 + geom_vline(x = mean(g1), size = 2, 
+                      color = &quot;#F8766D&quot;)
+p1
+
+p2 &lt;- p1 + geom_density(aes(x = g4), alpha = 0.2, fill = &quot;#A3A500&quot;) 
+#p2 &lt;- p2 + geom_vline(x = mean(g4), size = 2, color = &quot;#A3A500&quot;)
+p2
+
+p3 &lt;- p2 + geom_density(aes(x = g32), alpha = 0.2, fill = &quot;#00BF7D&quot;) 
+#p3 &lt;- p3 + geom_vline(x = mean(g32), size = 2, color = &quot;#00BF7D&quot;)
+p3
+
+
+p3 &lt;- p3 + gg(&quot;Title&quot;)
+
+
+p &lt;- ggplot(sampling.data, aes(x = g1))
+p &lt;- p + geom_density(alpha = 0.2, fill = &quot;#F8766D&quot;) 
+p &lt;- p + xlim(0, 150) + ylim(0, 0.075)
+p &lt;- p + geom_vline(x = TMDL, size = 2)
+p &lt;- p + geom_vline(x = mean(g1), size = 2, color = &quot;#F8766D&quot;)
+p
+
+
+
+
+sampling.data &lt;- melt(sampling.data)
+
+p &lt;- ggplot(sampling.data, aes(x = value, linetype = variable, fill = variable)) + theme_bw()
+p &lt;- p + geom_density(alpha = 0.2) + xlim(0, 150)
+p &lt;- p + geom_vline(x = 33, size = 1, color = &quot;grey20&quot;)
+p &lt;- p + xlab(&quot;Geometric Mean of Samples&quot;)
+p &lt;- p + theme(legend.position = &quot;none&quot;)
+p &lt;- p + geom_text(&quot;test&quot;, y = 0.075, x = 75)
+p</code></pre>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

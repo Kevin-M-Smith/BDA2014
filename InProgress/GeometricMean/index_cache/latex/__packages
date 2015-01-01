@@ -1,0 +1,10 @@
+base
+knitr
+pander
+plyr
+ggplot2
+gridExtra
+reshape2
+foreach
+iterators
+doMC
