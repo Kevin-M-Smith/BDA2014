@@ -13,10 +13,11 @@
 <title>Big Data:  Life on the New Frontier of Environmental Informatics</title>
 
 <script src="index_files/jquery-1.11.0/jquery.min.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link href="index_files/bootstrap-2.3.2/css/readable.min.css" rel="stylesheet" />
-<link href="index_files/bootstrap-2.3.2/css/bootstrap-responsive.min.css" rel="stylesheet" />
-<script src="index_files/bootstrap-2.3.2/js/bootstrap.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="index_files/bootstrap-3.3.1/css/readable.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="index_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="index_files/bootstrap-3.3.1/shim/respond.min.js"></script>
 
 <style type="text/css">code{white-space: pre;}</style>
 <link rel="stylesheet"
@@ -47,6 +48,14 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
 }
 </style>
 <div class="container-fluid main-container">
@@ -87,14 +96,13 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <div id="abstract" class="section level2">
 <h2>Abstract</h2>
 <p>In preparation for the era of “Big Data” it is imperative that we reflect on our current abilities to carry out computational research in a reproducible way, otherwise we risk our ambitions outpacing our comprehension. Dynamic Documents and Literate Programming can be combined to promote reproducible research and enhanced course material that promotes both topical (e.g. hydrologic) and programming literacy. Such techniques are likely only to grow in importance as the face of academic publishing changes from formal manuscripts to multimedia interactive grey literature. Finally, a gallery of examples is provided via embedded hyperlinks.</p>
-<p><em>N.B.</em> If you are having trouble opening the links in the PDF version of this report, the web version of this report is available at the following address: <a href="http://kevin-m-smith.github.io/BDA2014/FinalProject/Report">http://kevin-m-smith.github.io/BDA2014/FinalProject/Report</a></p>
+<p><strong>N.B.</strong> If you are having trouble opening the links in the PDF version of this report, the web version of this report is available at the following address: <a href="http://kevin-m-smith.github.io/BDA2014/FinalProject/Report" class="uri">http://kevin-m-smith.github.io/BDA2014/FinalProject/Report</a></p>
 </div>
 <div id="the-windfalls-and-pitfalls-of-the-new-frontier" class="section level2">
 <h2>The Windfalls and Pitfalls of The New Frontier</h2>
 <p>In many ways, the environmental engineering laboratory of today is markedly different from those of ten and twenty years ago. There are, of course, the familiar relics - like fiberglass flumes, scale models, stir plates and glassware. However, for many of us today, the greater part of our efforts consists solely of pushing around ones and zeros. We’ve traded the tedium of punch cards for the convenience of laptops; gone are the days of hand drawn plots on semi-log paper. Tables of approximations and significance values are all but forgotten.</p>
 <p>On the whole the digital revolution has been a boon to our profession, but it has not been without risk. The ease with which computational experiments may now carried out is a double edged sword. It has become all too easy to expand the boundaries of inquiry beyond the scope of our comprehension. When the day’s work is spent coaxing bits this way and that, how can we escape the temptation of the spurious pattern? When two decades have been invested into perfecting a distributed model, how can we admit to ourselves it is impossible to parameterize?</p>
 <hr>
-
 </div>
 <div id="taming-the-wild-west" class="section level2">
 <h2>Taming the Wild West</h2>
@@ -130,7 +138,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 </div>
 <div id="the-case-for-open-source-software" class="section level3">
 <h3>The Case for Open Source Software</h3>
-<p>One elegant way to move-the-knee of this trade-off frontier is to use open source software, such as <em>R</em>. The <em>R</em> statistical programming environment includes pre-built software packages, but allows the user to view and alter the source code as appropriate. Such modification is not possible with popular commerical packages such as MatLab, Minitab, Macsyma, Mathematica, SPSS, SAS, or S-plus. When these software packages give different results, there is no way to determine the source of the disagreement. See <a href="#Fateman">Fateman’s 1993</a> review of Mathematica. Furthermore, <a href="#Leeuw">de Leeuw</a> argues that publishing results that rely on these prorprietary packages violates the ideals of scientific reproducibility.</p>
+<p>One elegant way to move-the-knee of this trade-off frontier is to use open source software, such as <em>R</em>. The <em>R</em> statistical programming environment includes pre-built software packages, but allows the user to view and alter the source code as appropriate. Such modification is not possible with popular commercial packages such as MatLab, Minitab, Macsyma, Mathematica, SPSS, SAS, or S-plus. When these software packages give different results, there is no way to determine the source of the disagreement. See <a href="#Fateman">Fateman’s 1993</a> review of Mathematica. Furthermore, <a href="#Leeuw">de Leeuw</a> argues that publishing results that rely on these proprietary packages violates the ideals of scientific reproducibility.</p>
 </div>
 <div id="programming-literacy-through-literate-programming" class="section level3">
 <h3>Programming Literacy Through Literate Programming</h3>
@@ -151,7 +159,7 @@ B = runif(100)
 Y = X * B</code></pre>
 <p>First, we might ask, what is the Pearson sample correlation coefficient, <span class="math">\(\rho\)</span>?</p>
 <pre class="r"><code>cor(X, Y)</code></pre>
-<p>[1] 0.8293915</p>
+<p>[1] 0.834333</p>
 <p><br> However, as we know from past examples of <span class="math">\(\rho\)</span>, this doesn’t tell us much about the linearity of <span class="math">\(Y = f(X)\)</span>. Let’s look at a plot instead.</p>
 <pre class="r"><code>plot(X, Y)</code></pre>
 <p><img src="index_files/figure-html/unnamed-chunk-3-1.png" title="" alt="" width="576" /></p>
@@ -167,7 +175,7 @@ Y = X * B</code></pre>
 </div>
 <div id="the-web-grey-literature" class="section level3">
 <h3>The Web &amp; Grey Literature</h3>
-<p>The Internet and the World Wide Web have dratmatically changed the modes available to those seeking an audience or peer review for their work. <a href="#Banks">Banks 2006</a> predicts the eventual ‘collapse’ of any distinction between formal literature, and so-called ‘grey’ literature which is published through non-traditional channels, such as blogs. Traditionally only formal peer reviewed publications have been taken to be sound references. However, in light of <em>Claerbout’s Principle</em>, which suggests that manuscripts are merely an <em>advertisement</em> of scholarship, not the sholarship <em>in the flesh</em>, web-based grey literature may be of more value. This is because the space and formatting limitations of traditional documents do not exist on the web. See <a href="#Stodden">Stodden 2010</a>.</p>
+<p>The Internet and the World Wide Web have dramatically changed the modes available to those seeking an audience or peer review for their work. <a href="#Banks">Banks 2006</a> predicts the eventual ‘collapse’ of any distinction between formal literature, and so-called ‘grey’ literature which is published through non-traditional channels, such as blogs. Traditionally only formal peer reviewed publications have been taken to be sound references. However, in light of <em>Claerbout’s Principle</em>, which suggests that manuscripts are merely an <em>advertisement</em> of scholarship, not the scholarship <em>in the flesh</em>, web-based grey literature may be of more value. This is because the space and formatting limitations of traditional documents do not exist on the web. See <a href="#Stodden">Stodden 2010</a>.</p>
 <hr>
 </div>
 </div>
@@ -212,7 +220,7 @@ Y = X * B</code></pre>
 <ul>
 <li><a href="http://kevin-m-smith.github.io/BDA2014/Bayesian/OccamsRazor/">Occam’s Razor in Model Selection</a></li>
 </ul></li>
-<li>Time Series Analsyis
+<li>Time Series Analysis
 <ul>
 <li><a href="http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis/">ARIMA Models</a></li>
 </ul></li>
