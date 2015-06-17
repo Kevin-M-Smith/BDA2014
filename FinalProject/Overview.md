@@ -10,7 +10,7 @@ $(function($) {
  		var $this = $(this);
  		var title = $this.attr('title');
  		var src = $this.attr('data-big') || $this.attr('src');
- 		var a = $('<a href="#" class="fancybox"></a>').attr('href', src).attr('title', title);
+ 		var a = $('<a href="" class="fancybox"></a>').attr('href', src).attr('title', title);
  		$this.wrap(a);
  	});
  	if (gallery)
@@ -20,10 +20,10 @@ $(function($) {
  	});
  });
 </script>
-<link type="text/css" rel="stylesheet" media="screen" href="../TimeSeriesAnalysis/jquery.fancybox-1.3.4.css" />
 
 A Brief Overview
 ========================================================
+
 <div style="font-size: 2em; line-height: 100%;"> 
 Dynamic Documents, <br /> Literate Programming, and Reproducible Research with R
 </div>
@@ -63,7 +63,7 @@ cor(X, Y)
 ```
 
 ```
-[1] 0.8451758
+[1] 0.8723698
 ```
 <br>
 ### __Query:__
@@ -97,7 +97,7 @@ Scatterplot
 g
 ```
 
-<img src="Overview-figure/unnamed-chunk-5-1.png" title="Scatterplot of Y vs. X" alt="Scatterplot of Y vs. X" style="display: block; margin: auto;" />
+<img src="Overview-figure/unnamed-chunk-6-1.png" title="Scatterplot of Y vs. X" alt="Scatterplot of Y vs. X" style="display: block; margin: auto;" />
 
 Add LOESS Smooth
 ========================================
@@ -106,7 +106,7 @@ Add LOESS Smooth
 g + geom_smooth()
 ```
 
-<img src="Overview-figure/unnamed-chunk-6-1.png" title="Scatterplot of Y vs. X with LOESS" alt="Scatterplot of Y vs. X with LOESS" style="display: block; margin: auto;" />
+<img src="Overview-figure/unnamed-chunk-7-1.png" title="Scatterplot of Y vs. X with LOESS" alt="Scatterplot of Y vs. X with LOESS" style="display: block; margin: auto;" />
 
 Flip Coordinates
 ========================================
@@ -115,7 +115,7 @@ Flip Coordinates
 g + coord_flip()
 ```
 
-<img src="Overview-figure/unnamed-chunk-7-1.png" title="Flipped Coordinates" alt="Flipped Coordinates" style="display: block; margin: auto;" />
+<img src="Overview-figure/unnamed-chunk-8-1.png" title="Flipped Coordinates" alt="Flipped Coordinates" style="display: block; margin: auto;" />
 
 Density Esitmation
 ========================================
@@ -124,7 +124,7 @@ Density Esitmation
 g + stat_density2d()
 ```
 
-<img src="Overview-figure/unnamed-chunk-8-1.png" title="2D Density Estimation" alt="2D Density Estimation" style="display: block; margin: auto;" />
+<img src="Overview-figure/unnamed-chunk-9-1.png" title="2D Density Estimation" alt="2D Density Estimation" style="display: block; margin: auto;" />
 
 Check Normality of X
 ================================
@@ -152,7 +152,7 @@ g <- g + geom_density(
 g
 ```
 
-![Emprical Density Curves](Overview-figure/unnamed-chunk-11-1.png) 
+![Emprical Density Curves](Overview-figure/unnamed-chunk-12-1.png) 
 
 Combined Empirical Density Curves
 ================
@@ -165,7 +165,7 @@ g <- g + geom_density(
 g
 ```
 
-![Empirical Density Curves](Overview-figure/unnamed-chunk-12-1.png) 
+![Empirical Density Curves](Overview-figure/unnamed-chunk-13-1.png) 
 
 ================
 <iframe src="http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis/" width="1200px" height="1200px"></iframe>

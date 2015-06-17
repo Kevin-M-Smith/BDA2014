@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<title>Big Data:  Life on the New Frontier of Environmental Informatics</title>
+
+<script src="index_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="index_files/bootstrap-3.3.1/css/readable.min.css" rel="stylesheet" />
+<script src="index_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="index_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="index_files/bootstrap-3.3.1/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="index_files/highlight/default.css"
+      type="text/css" />
+<script src="index_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title"><strong>Big Data: </strong><br> Life on the New Frontier of Environmental Informatics</h1>
+<h4 class="date"><em>Kevin Smith | Big Data Analytics | Fall 2014</em></h4>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#abstract">Abstract</a></li>
+<li><a href="#the-windfalls-and-pitfalls-of-the-new-frontier">The Windfalls and Pitfalls of The New Frontier</a></li>
+<li><a href="#taming-the-wild-west">Taming the Wild West</a><ul>
+<li><a href="#the-call-for-reproducibility-in-computational-experiments">The Call For Reproducibility in Computational Experiments</a></li>
+</ul></li>
+<li><a href="#survival-skills">Survival Skills</a><ul>
+<li><a href="#consumers-and-producers">Consumers and Producers</a></li>
+<li><a href="#the-benefits-and-pitfalls-of-obscurity">The Benefits and Pitfalls of Obscurity</a></li>
+<li><a href="#the-case-for-open-source-software">The Case for Open Source Software</a></li>
+<li><a href="#programming-literacy-through-literate-programming">Programming Literacy Through Literate Programming</a></li>
+</ul></li>
+<li><a href="#the-new-storytelling">The New Storytelling</a><ul>
+<li><a href="#dynamic-documents">Dynamic Documents</a></li>
+<li><a href="#the-web-grey-literature">The Web &amp; Grey Literature</a></li>
+</ul></li>
+<li><a href="#conclusion-bringing-it-all-together">Conclusion: Bringing It All Together</a></li>
+<li><a href="#gallery">Gallery</a><ul>
+<li><a href="#vignettes">Vignettes</a></li>
+<li><a href="#tutorials">Tutorials</a></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+
+<hr>
+<div id="abstract" class="section level2">
+<h2>Abstract</h2>
+<p>In preparation for the era of “Big Data” it is imperative that we reflect on our current abilities to carry out computational research in a reproducible way, otherwise we risk our ambitions outpacing our comprehension. Dynamic Documents and Literate Programming can be combined to promote reproducible research and enhanced course material that promotes both topical (e.g. hydrologic) and programming literacy. Such techniques are likely only to grow in importance as the face of academic publishing changes from formal manuscripts to multimedia interactive grey literature. Finally, a gallery of examples is provided via embedded hyperlinks.</p>
+<p><strong>N.B.</strong> If you are having trouble opening the links in the PDF version of this report, the web version of this report is available at the following address: <a href="http://kevin-m-smith.github.io/BDA2014/FinalProject/Report" class="uri">http://kevin-m-smith.github.io/BDA2014/FinalProject/Report</a></p>
+</div>
+<div id="the-windfalls-and-pitfalls-of-the-new-frontier" class="section level2">
+<h2>The Windfalls and Pitfalls of The New Frontier</h2>
+<p>In many ways, the environmental engineering laboratory of today is markedly different from those of ten and twenty years ago. There are, of course, the familiar relics - like fiberglass flumes, scale models, stir plates and glassware. However, for many of us today, the greater part of our efforts consists solely of pushing around ones and zeros. We’ve traded the tedium of punch cards for the convenience of laptops; gone are the days of hand drawn plots on semi-log paper. Tables of approximations and significance values are all but forgotten.</p>
+<p>On the whole the digital revolution has been a boon to our profession, but it has not been without risk. The ease with which computational experiments may now carried out is a double edged sword. It has become all too easy to expand the boundaries of inquiry beyond the scope of our comprehension. When the day’s work is spent coaxing bits this way and that, how can we escape the temptation of the spurious pattern? When two decades have been invested into perfecting a distributed model, how can we admit to ourselves it is impossible to parameterize?</p>
+<hr>
+</div>
+<div id="taming-the-wild-west" class="section level2">
+<h2>Taming the Wild West</h2>
+<div id="the-call-for-reproducibility-in-computational-experiments" class="section level3">
+<h3>The Call For Reproducibility in Computational Experiments</h3>
+<p>While famous scientific discoveries have been the result of the chance encounter with a fallen apple (e.g. <a href="http://en.wikipedia.org/wiki/Isaac_Newton#Apple_incident">Newton</a>), or have been borne out of serendipity in the chaos of a graduate laboratory (e.g. <a href="http://en.wikipedia.org/wiki/Geiger–Marsden_experiment">Geiger and Marsden</a>), their significance is derived from their reproducibility. This reproducibility is the hallmark of contemporary scientific epistemology. Computational experiments should be subject to these same expectations. Indeed, computational inquiry does not suffer from the physical anomalies of traditional experiments that result from non-ideal laboratory conditions, machine calibration, measurement error, and so on. In fact, there is no reason that computational experiments shouldn’t be <strong>perfectly reproducible</strong>.</p>
+<p>Unfortunately finding a publication meeting this standard appears to be the exception rather than the rule. See <a href="#Ruschhaupt">Ruschhaupt et al. 2004, page 20</a> for a discussion of how attempts to reproduce computational research often fail even with help from authors. Indeed, <a href="#Green">Green 2003</a> offers:</p>
+<blockquote>
+<p>“Most statistics papers, as published, no longer satisfy the conventional scientific criterion of reproducibility: could a reasonably competent and adequately equipped reader obtain equivalent results if the experiment or analysis were repeated? Typically, the answer is no…”</p>
+</blockquote>
+<p>According to <a href="#Rossini">Rossini et. al 2003</a> this needn’t be the norm:</p>
+<blockquote>
+<p>“Computations can be proofed. Correctness can be verified by delivering appropriately documented and functional code, along with corresponding inputs and data for all results along with the paper.”</p>
+</blockquote>
+<p>In <em>Reproducible Research: the Bottom Line</em> <a href="#Leeuw">de Leeuw</a> coins <em>Claerbout’s Principle</em>, after Standford geophysicist Jon Claerbout, who lamented the agony with which members of his lab attempted to reproduce their own results only months later <a href="#Schwab">Schwab et al. 2009</a>. It reads as follows:</p>
+<blockquote>
+<p>“An article about computational science in a scientific publication is <em>not</em> the scholarship itself, it is merely <em>advertising</em> of the scholarship. The actual scholarship is the complete software development environment and the complete set of instructions which generated the figures.” -(de Leeuw)</p>
+</blockquote>
+<p>Therefore, meaningful scholarship in the era of Big Data will require publication of far more than just the final manuscript. To prepare up-and-coming students for this change it is critical to cultivate <strong>programming literacy</strong>.</p>
+<hr>
+</div>
+</div>
+<div id="survival-skills" class="section level2">
+<h2>Survival Skills</h2>
+<div id="consumers-and-producers" class="section level3">
+<h3>Consumers and Producers</h3>
+<p>For today’s engineering professional, basic computer literacy is a requisite skill. However, on the whole we are missing the mark on programming literacy. Where we might define computer literacy as the ability to use a computer for regular tasks (browsing the internet, sending email, word processing, etc.), programming literacy is the ability to understand and alter computer routines. The profound power of programming literacy is that it turns computer <em>users</em> into <em>operators</em>. Programming literate professionals are not merely <em>consumers</em> of pre-packaged software, but can also be <em>producers</em>. In any event, undertaking statistical analysis without programming literacy can be a dangerous endeavor.</p>
+</div>
+<div id="the-benefits-and-pitfalls-of-obscurity" class="section level3">
+<h3>The Benefits and Pitfalls of Obscurity</h3>
+<p>Today most researchers use off-the-shelf models and statistical packages that come pre-assembled. In these software packages, algorithms are quietly obfuscated from the user under what is essentially layer of <em>trust</em>. This obscurity is beneficial in many ways, as it improves the consistency of analyses and allows critical assessments to proceed at a more rapid pace.</p>
+<p>Of course, there are some trade-offs. By not forcing the user to program each routine by hand, under-the-hood programming errors are greatly reduced. This comes with increased risk of unintentional misuse. Since the reasoning of the algorithm selected is not as clear, it is much harder to tell if we have selected the right tool for the job.</p>
+</div>
+<div id="the-case-for-open-source-software" class="section level3">
+<h3>The Case for Open Source Software</h3>
+<p>One elegant way to move-the-knee of this trade-off frontier is to use open source software, such as <em>R</em>. The <em>R</em> statistical programming environment includes pre-built software packages, but allows the user to view and alter the source code as appropriate. Such modification is not possible with popular commercial packages such as MatLab, Minitab, Macsyma, Mathematica, SPSS, SAS, or S-plus. When these software packages give different results, there is no way to determine the source of the disagreement. See <a href="#Fateman">Fateman’s 1993</a> review of Mathematica. Furthermore, <a href="#Leeuw">de Leeuw</a> argues that publishing results that rely on these proprietary packages violates the ideals of scientific reproducibility.</p>
+</div>
+<div id="programming-literacy-through-literate-programming" class="section level3">
+<h3>Programming Literacy Through Literate Programming</h3>
+<p>With the source of the software exposed, it is much easier to promote programming literacy. Specifically, one of the most successful approaches is “literate programming”, originally coined in <a href="#Knuth">Knuth 1992</a>, and developed subsequently by others (e.g. <a href="#Ramsey">Ramsey 1994</a>). Literate programming allows natural languages and programming languages to be interleaved in a way that the code runs in place, and the results may appear among the natural language. It also allows the user to “follow along at home” by using and modifying the code.</p>
+<div id="simple-literate-programming-example-with-r" class="section level4">
+<h4>Simple Literate Programming Example with <em>R</em></h4>
+<p>Given:</p>
+<div style="text-align: center">
+<ul>
+<li><span class="math">\(X \sim N(0,1)\)</span></li>
+<li><span class="math">\(B \sim U(0,1)\)</span></li>
+<li><span class="math">\(Y \equiv B \cdot X\)</span></li>
+</ul>
+</div>
+<p>Can you determine if the relationship <span class="math">\(Y = f(X)\)</span> is linear?</p>
+<pre class="r"><code>X = rnorm(100)
+B = runif(100)
+Y = X * B</code></pre>
+<p>First, we might ask, what is the Pearson sample correlation coefficient, <span class="math">\(\rho\)</span>?</p>
+<pre class="r"><code>cor(X, Y)</code></pre>
+<p>[1] 0.834333</p>
+<p><br> However, as we know from past examples of <span class="math">\(\rho\)</span>, this doesn’t tell us much about the linearity of <span class="math">\(Y = f(X)\)</span>. Let’s look at a plot instead.</p>
+<pre class="r"><code>plot(X, Y)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" title="" alt="" width="576" /></p>
+<hr>
+</div>
+</div>
+</div>
+<div id="the-new-storytelling" class="section level2">
+<h2>The New Storytelling</h2>
+<div id="dynamic-documents" class="section level3">
+<h3>Dynamic Documents</h3>
+<p>Dynamic Documents are a means of packaging the data, analysis, code, outputs, and computational environment together in such a way that the the entire unmodified document can be re-run, and the same results obtained. Dynamic Documents eliminate the need for <strong>copy and paste</strong> to produce publishable materials, minimizing transposition errors. They also greatly improve the lifespan of research products, since they can be reproduced easily at a later date. Furthermore since the justification for the methods used is provided inline with the code, it encourages peer-review, which is generally a daunting task for computational experiments. See <a href="#Sawitzki">Sawitzki 1999</a> and <a href="#Gentleman">Gentleman and Lang 2007</a>.</p>
+</div>
+<div id="the-web-grey-literature" class="section level3">
+<h3>The Web &amp; Grey Literature</h3>
+<p>The Internet and the World Wide Web have dramatically changed the modes available to those seeking an audience or peer review for their work. <a href="#Banks">Banks 2006</a> predicts the eventual ‘collapse’ of any distinction between formal literature, and so-called ‘grey’ literature which is published through non-traditional channels, such as blogs. Traditionally only formal peer reviewed publications have been taken to be sound references. However, in light of <em>Claerbout’s Principle</em>, which suggests that manuscripts are merely an <em>advertisement</em> of scholarship, not the scholarship <em>in the flesh</em>, web-based grey literature may be of more value. This is because the space and formatting limitations of traditional documents do not exist on the web. See <a href="#Stodden">Stodden 2010</a>.</p>
+<hr>
+</div>
+</div>
+<div id="conclusion-bringing-it-all-together" class="section level2">
+<h2>Conclusion: Bringing It All Together</h2>
+<p>Literate Programming and Dynamic Documents have long been a dream, but in the last decade, they have become fully realizable <a href="#Hardle">Härdle and Rönz, 2002</a>. Particularly promising are efforts surrounding <em>R</em>, and open source statistical language and programming environment originally developed and introduced by <a href="#Ihaka">Ihaka and Gentleman 1996</a>. In the past few years, the introduction of <em>Pandoc</em> by <a href="#MacFarlane">MacFarlane 2012</a> and <em>knitr</em> by <a href="#Xie">Xie 2013</a> have made Literate Programming and the generation of Dynamic Documents even easier.</p>
+<p>Blending the two can put a new spin on Socratic question-and-answer teaching styles. See <a href="http://kevin-m-smith.github.io/BDA2014/Means/WhatDidYouMean/"><em>What did You Mean?</em></a>. Course notes no longer need to be a photocopy of a photocopy of a photocopy. Pages can come alive in full color with interactive examples that both show and tell simultaneously. See <a href="http://kevin-m-smith.github.io/BDA2014/Classification/ROC/">ROC Curves</a>. This method is effective both for teaching programming skills (see <a href="http://kevin-m-smith.github.io/BDA2014/Regression/LeapsAndBounds/">Leaps and Bounds</a>) and topical material (see <a href="http://kevin-m-smith.github.io/BDA2014/Regression/BranchAndBound/">Branch and Bound</a>). Products can be packaged long-form (see <a href="http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis/">ARIMA Models</a>), or in slide-show format (see <a href="http://kevin-m-smith.github.io/BDA2014/Bayesian/OccamsRazor/">Occam’s Razor</a>).</p>
+<p>By implementing the best practices for computational reproducbility advocated for by <a href="#Wilson">Wilson et al. 2014</a> and <a href="#Gentleman2">Gentleman 2005</a> the benefits of Dynamic Documents and Literate Programming are extended to students and researchers alike, fulfilling <a href="#Leeuw">de Leeuw’s (2001)</a> vision:</p>
+<blockquote>
+<p>“there is no reason to limit the Claerbout’s Principle to published articles. We can make exactly the same statement about our lectures and teaching, certainly in the context of graduate teaching. We must be able to give our students our code and our graphics files, so that they can display and study them on their own computers (and not only on our workstations, or in crowded university labs).”</p>
+</blockquote>
+<p><img src="images/benefits.png" alt="benefits" /></p>
+</div>
+<div id="gallery" class="section level2">
+<h2>Gallery</h2>
+<p>The following is a selection of examples of Dynamic Documents and Literate Programming. Each is an expression of a unique style as I work to study the pro’s and con’s of each layout. As such comments and feedback about usability are very welcome.</p>
+<div id="vignettes" class="section level3">
+<h3>Vignettes</h3>
+<ul>
+<li>Regression
+<ul>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Regression/TheRatchet/">Parameterization - The RSS Ratchet</a></li>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Regression/MultipleObjectives/">Multiple Objectives</a></li>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Regression/BranchAndBound/">Best Subsets - Branch and Bound</a></li>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Regression/LeapsAndBounds/">Best Subsets - Leaps and Bounds</a></li>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Regression/BulgingDiagram/">Tukey’s Bulging Rule</a></li>
+</ul></li>
+<li>Classification
+<ul>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Classification/ROC/">ROC Curves</a></li>
+</ul></li>
+<li>Means
+<ul>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Means/WhatDidYouMean/">What did you mean?</a></li>
+</ul></li>
+</ul>
+</div>
+<div id="tutorials" class="section level3">
+<h3>Tutorials</h3>
+<ul>
+<li>Bayesian
+<ul>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/Bayesian/OccamsRazor/">Occam’s Razor in Model Selection</a></li>
+</ul></li>
+<li>Time Series Analysis
+<ul>
+<li><a href="http://kevin-m-smith.github.io/BDA2014/TimeSeriesAnalysis/">ARIMA Models</a></li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li><p><a name="Rossini"></a> A. J. Rossini, T. Lumley, and F. Leisch, “On the Edge: Statistics &amp; Computing: Reproducible Statistical Research,” Chance, vol. 16, no. 2, pp. 41–45, 2003.</p></li>
+<li><p><a name="Ruschhaupt"></a> M. Ruschhaupt, W. Huber, A. Poustka, and U. Mansmann, “A compendium to ensure computational reproducibility in high-dimensional classification tasks,” Statistical Applications in Genetics and Molecular Biology, vol. 3, no. 1, 2004.</p></li>
+<li><p><a name="Green"></a> P. J. Green, “Diversities of gifts, but the same spirit,” Journal of the Royal Statistical Society: Series D (The Statistician), vol. 52, no. 4, pp. 423–438, 2003.</p></li>
+<li><p><a name="Leeuw"></a> J. De Leeuw, “Reproducible research. the bottom line,” Department of Statistics, UCLA, 2001.</p></li>
+<li><p><a name="Schwab"></a>M. Schwab, M. Karrenbach, and J. Claerbout, “Making scientific computations reproducible,” Computing in Science &amp; Engineering, vol. 2, no. 6, pp. 61–67, 2000.</p></li>
+<li><p><a name="Fateman"></a>R. J. Fateman, “A Review of Mathematica,” J. Symbolic Comp, vol. 13, pp. 545–579, 1993.</p></li>
+<li><p><a name="Knuth"></a> D. E. Knuth, “Literate programming,” CSLI Lecture Notes, Stanford, CA: Center for the Study of Language and Information (CSLI), 1992, vol. 1, 1992.</p></li>
+<li><p><a name="Ramsey"></a> N. Ramsey, “Literate programming simplified,” Software, IEEE, vol. 11, no. 5, pp. 97–105, Sep. 1994.</p></li>
+<li><p><a name="Sawitzki"></a> G. Sawitzki, “Keeping statistics alive in documents,” Discussion Papers, Interdisciplinary Research Project 373: Quantification and Simulation of Economic Processes, 1999.</p></li>
+<li><p><a name="Gentleman"></a> R. Gentleman and D. Temple Lang, “Statistical Analyses and Reproducible Research,” Journal of Computational and Graphical Statistics, vol. 16, no. 1, pp. 1–23, Mar. 2007.</p></li>
+<li><p><a name="Stodden"></a> V. C. Stodden, “The scientific method in practice: Reproducibility in the computational sciences,” 2010.</p></li>
+<li><p><a name="Banks"></a> M. A. Banks, “Towards a continuum of scholarship: The eventual collapse of the distinction between grey and non-grey literature,” Publishing Research Quarterly, vol. 22, no. 1, pp. 4–11, 2006.</p></li>
+<li><p><a name="MacFarlane"></a> J. MacFarlane, Pandoc: a universal document converter. 2012.</p></li>
+<li><p><a name="Härdle"></a> W. Härdle and B. Rönz, Compstat Proceedings in Computational Statistics. Heidelberg: Physica-Verlag HD: Imprint: Physica, 2002.</p></li>
+<li><p><a name="Ihaka"></a> R. Ihaka and R. Gentleman, “R: A Language for Data Analysis and Graphics,” Journal of Computational and Graphical Statistics, vol. 5, no. 3, pp. 299–314, Sep. 1996.</p></li>
+<li><p><a name="Xie"></a> Y. Xie, “knitr: A general-purpose package for dynamic report generation in R,” R package version, vol. 1, no. 7, 2013.</p></li>
+<li><p><a name="Wilson"></a> G. Wilson, D. A. Aruliah, C. T. Brown, N. P. Chue Hong, M. Davis, R. T. Guy, S. H. D. Haddock, K. D. Huff, I. M. Mitchell, M. D. Plumbley, B. Waugh, E. P. White, and P. Wilson, “Best Practices for Scientific Computing,” PLoS Biology, vol. 12, no. 1, p. e1001745, Jan. 2014.</p></li>
+<li><p><a name="Gentleman2"></a> R. Gentleman, “Reproducible Research: A Bioinformatics Case Study,” Statistical Applications in Genetics and Molecular Biology, vol. 4, no. 1, Jan. 2005.</p></li>
+</ul>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
